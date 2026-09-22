@@ -12,9 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abd9df482696bb1468ea2f724bc2bfc2, type: 3}
   m_Name: Golden
   m_EditorClassIdentifier: Assembly-CSharp::PickaxeData
-  pickaxeName: Golden
-  maxDurability: 50
-  damage: 100
-  rangeOfDigging: 1
-  rewardMultiplyer: 1
+  Name: Golden
+  ID: 6
+  MaxDurability: 30
+  Damage: 9999
+  RangeOfDigging: 1
+  RewardMultiplyer: 9999
+  Price: 4000
   icon: {fileID: 2576783966388108648, guid: c11c6b432fbe6f048a26ea0f2520b7c5, type: 3}

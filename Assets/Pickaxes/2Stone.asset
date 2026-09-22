@@ -12,9 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abd9df482696bb1468ea2f724bc2bfc2, type: 3}
   m_Name: 2Stone
   m_EditorClassIdentifier: Assembly-CSharp::PickaxeData
-  pickaxeName: Stone
-  maxDurability: 200
-  damage: 2
-  rangeOfDigging: 1
-  rewardMultiplyer: 1
+  Name: Stone
+  ID: 1
+  MaxDurability: 200
+  Damage: 2
+  RangeOfDigging: 2
+  RewardMultiplyer: 1.2
+  Price: 200
   icon: {fileID: -8393599773791687734, guid: 7a0fc8c48c9e80945868eaa2be1d1ba4, type: 3}

@@ -8,7 +8,7 @@ public class Pickaxe : MonoBehaviour
     public int MaxDurability;
     public int Damage;
     public int RangeOfDigging;
-    public int RewardMultiplyer;
+    public float RewardMultiplyer;
     public SpriteRenderer Icon;
 
     [SerializeField] public float MinExplosionForce;
@@ -25,11 +25,11 @@ public class Pickaxe : MonoBehaviour
 
     private void Awake()
     {
-        MaxDurability = data.maxDurability;
+        MaxDurability = data.MaxDurability;
         Durability = MaxDurability;
-        Damage = data.damage;
-        RangeOfDigging = data.rangeOfDigging;
-        RewardMultiplyer = data.rewardMultiplyer;
+        Damage = data.Damage;
+        RangeOfDigging = data.RangeOfDigging;
+        RewardMultiplyer = data.RewardMultiplyer;
         Icon.sprite = data.icon;
 
         rb = GetComponent<Rigidbody2D>();

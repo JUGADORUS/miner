@@ -12,9 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abd9df482696bb1468ea2f724bc2bfc2, type: 3}
   m_Name: 1Wooden
   m_EditorClassIdentifier: Assembly-CSharp::PickaxeData
-  pickaxeName: Wooden
-  maxDurability: 100
-  damage: 1
-  rangeOfDigging: 1
-  rewardMultiplyer: 1
+  Name: Wooden
+  ID: 0
+  MaxDurability: 100
+  Damage: 1
+  RangeOfDigging: 1
+  RewardMultiplyer: 1
+  Price: 0
   icon: {fileID: -5896062227517843701, guid: 9c45c92e73b553d4bb6922067fe5dfbd, type: 3}

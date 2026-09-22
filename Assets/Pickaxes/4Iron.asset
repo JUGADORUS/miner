@@ -12,9 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abd9df482696bb1468ea2f724bc2bfc2, type: 3}
   m_Name: 4Iron
   m_EditorClassIdentifier: Assembly-CSharp::PickaxeData
-  pickaxeName: Iron
-  maxDurability: 420
-  damage: 4
-  rangeOfDigging: 1
-  rewardMultiplyer: 1
+  Name: Iron
+  ID: 3
+  MaxDurability: 400
+  Damage: 4
+  RangeOfDigging: 4
+  RewardMultiplyer: 2
+  Price: 1000
   icon: {fileID: 7551880176064049592, guid: 8e4f6033b16ee2348a3cbbbfdf9a4d48, type: 3}

@@ -292,7 +292,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98871f4f7e905774aad89301d3af03e6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
-  player: {fileID: 494917694}
+  player: {fileID: 494917693}
   pickaxe: {fileID: 51138911}
 --- !u!114 &74726380
 MonoBehaviour:
@@ -1236,7 +1236,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 494917692}
-  - component: {fileID: 494917694}
+  - component: {fileID: 494917693}
   m_Layer: 0
   m_Name: player
   m_TagString: Untagged
@@ -1260,7 +1260,7 @@ Transform:
   - {fileID: 51138910}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: -31.276}
---- !u!114 &494917694
+--- !u!114 &494917693
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1269,9 +1269,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 494917689}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c1b8a62348d21d049b966c3b16748537, type: 3}
+  m_Script: {fileID: 11500000, guid: 84995fe636edff84abf6b6b0b29d5374, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::player
+  m_EditorClassIdentifier: Assembly-CSharp::Player
   Money: 0
 --- !u!1 &519420028
 GameObject:

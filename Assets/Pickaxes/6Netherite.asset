@@ -12,9 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: abd9df482696bb1468ea2f724bc2bfc2, type: 3}
   m_Name: 6Netherite
   m_EditorClassIdentifier: Assembly-CSharp::PickaxeData
-  pickaxeName: Netherite
-  maxDurability: 1000
-  damage: 5
-  rangeOfDigging: 1
-  rewardMultiplyer: 1
+  Name: Netherite
+  ID: 5
+  MaxDurability: 1000
+  Damage: 6
+  RangeOfDigging: 6
+  RewardMultiplyer: 5
+  Price: 3200
   icon: {fileID: -8231246413418021475, guid: 81243f0cc5be4fc4192e07bcef17aceb, type: 3}

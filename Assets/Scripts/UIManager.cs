@@ -14,12 +14,13 @@ public class UIManager : MonoBehaviour
 
     void Start()
     {
+        UpdateMoneyText(PlayerPrefs.GetInt("PlayerMoney", 0));
         GameEvents.OnMoneyChanged += UpdateMoneyText;
         GameEvents.OnHitBlock += (block, durability) => UpdateDurabilityText(durability); 
         GameEvents.OnBlockDestroyed += (block, position) => UpdateDepthText( Mathf.Abs((int)position.y) );
         GameEvents.OnDurabilityChanged += (durability, maxDurability) => UpdateDurabilitySlider(durability, maxDurability);
 
-        Depth.text = "0";
+        if(Depth != null) { Depth.text = "0"; }
     }
 
     public void UpdateMoneyText(int money)
