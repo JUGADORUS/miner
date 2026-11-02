@@ -9,7 +9,7 @@ public class PickaxeData : ScriptableObject
     public int MaxDurability;
     public int Damage;
     public int RangeOfDigging;
-    public float RewardMultiplyer;
+    public float RewardMultiplier;
     public int Price;
 
     public Sprite icon;

@@ -93,10 +93,6 @@ public class ParticleManager : MonoBehaviour
             targetRotation = Quaternion.Euler(90, 90, 0);
             newPosition = position + new Vector2(offset, 0f);
         }
-        else
-        {
-            Time.timeScale = 0.1f;
-        }
 
         ParticleSystem sparks = Instantiate(pickaxeSparksPrefab, newPosition, targetRotation);
         Destroy(sparks.gameObject, 5f);

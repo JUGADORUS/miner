@@ -2,11 +2,13 @@ using UnityEngine;
 
 public class Player : MonoBehaviour
 {
-    public int Money;
+    public int Money { get; private set; }
+
+    private const string MoneyKey = "PlayerMoney";
 
     private void Awake()
     {
-        Money = PlayerPrefs.GetInt("PlayerMoney", 0);
+        Money = PlayerPrefs.GetInt(MoneyKey, 0);
     }
 
     private void Start()
@@ -14,31 +16,22 @@ public class Player : MonoBehaviour
         GameEvents.OnMoneyChanged?.Invoke(Money);
     }
 
-    public void GetReward(int reward)
-    {
-        Money = PlayerPrefs.GetInt("PlayerMoney", 0) + reward;
-        PlayerPrefs.SetInt("PlayerMoney", Money);
-        PlayerPrefs.Save();
-
-        GameEvents.OnMoneyChanged?.Invoke(Money);
-    }
+    public bool CanSpend(int amount) => Money >= amount;
 
     public bool TrySpendMoney(int amount)
     {
-        if (Money >= amount)
-        {
-            Money -= amount;
-            PlayerPrefs.SetInt("PlayerMoney", Money);
-            PlayerPrefs.Save();
-            GameEvents.OnMoneyChanged?.Invoke(Money);
-            return true;
-        }
-
-        return false;
+        if (!CanSpend(amount)) return false;
+        SetMoney(Money - amount);
+        return true;
     }
 
-    public bool CanSpend(int money)
+    public void GetReward(int reward) => SetMoney(Money + reward);
+
+    private void SetMoney(int value)
     {
-        return PlayerPrefs.GetInt("PlayerMoney", 0) >= money;
+        Money = value;
+        PlayerPrefs.SetInt(MoneyKey, Money);
+        PlayerPrefs.Save();
+        GameEvents.OnMoneyChanged?.Invoke(Money);
     }
 }

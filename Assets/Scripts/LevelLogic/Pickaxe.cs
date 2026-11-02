@@ -1,4 +1,5 @@
 using UnityEngine;
+using static UnityEditor.Experimental.GraphView.GraphView;
 
 public class Pickaxe : MonoBehaviour
 {
@@ -18,6 +19,8 @@ public class Pickaxe : MonoBehaviour
     [SerializeField] private float maxRotationSpeed = 500f;
     [SerializeField] private Vector2 customCenterOfMass;
 
+    [SerializeField] private PickaxeDatabase _pickaxeDatabase;
+
     private void FixedUpdate()
     {
         ControlAngularVelocity();
@@ -25,15 +28,39 @@ public class Pickaxe : MonoBehaviour
 
     private void Awake()
     {
-        MaxDurability = data.MaxDurability;
+        int equippedId = PlayerPrefs.GetInt("EquippedPickaxe", 0);
+        data = _pickaxeDatabase.GetById(equippedId);
+
+        if (data == null)
+        {
+            Debug.LogError($"[Pickaxe]  ирка с ID={equippedId} не найдена");
+            return;
+        }
+
+        int damageBonus = UpgradesManager.Instance != null
+            ? UpgradesManager.Instance.GetDamageBonus(data.ID) : 0;
+        int durabilityBonus = UpgradesManager.Instance != null
+            ? UpgradesManager.Instance.GetDurabilityBonus(data.ID) : 0;
+        float multiplierBonus = UpgradesManager.Instance != null
+            ? UpgradesManager.Instance.GetMultiplierBonus(data.ID) : 0f;
+
+        MaxDurability = data.MaxDurability + durabilityBonus;
         Durability = MaxDurability;
-        Damage = data.Damage;
+        Damage = data.Damage + damageBonus;
         RangeOfDigging = data.RangeOfDigging;
-        RewardMultiplyer = data.RewardMultiplyer;
+        RewardMultiplyer = data.RewardMultiplier + multiplierBonus;
         Icon.sprite = data.icon;
+
+        Debug.Log($"Damage: {Damage}");
 
         rb = GetComponent<Rigidbody2D>();
         rb.centerOfMass = customCenterOfMass;
+        GameEvents.OnPickaxeBroken += HandlePickaxeBroken;
+    }
+
+    private void OnDestroy()
+    {
+        GameEvents.OnPickaxeBroken -= HandlePickaxeBroken;
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
@@ -67,5 +94,10 @@ public class Pickaxe : MonoBehaviour
         {
             rb.angularVelocity = Mathf.Sign(rb.angularVelocity) * maxRotationSpeed;
         }
+    }
+
+    private void HandlePickaxeBroken()
+    {
+        rb.bodyType = RigidbodyType2D.Static;
     }
 }

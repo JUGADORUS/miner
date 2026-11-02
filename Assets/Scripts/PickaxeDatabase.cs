@@ -1,26 +1,15 @@
-using UnityEngine;
 using System.Collections.Generic;
+using UnityEngine;
 
 [CreateAssetMenu(fileName = "PickaxeDatabase", menuName = "Scriptable Objects/Pickaxe Database")]
 public class PickaxeDatabase : ScriptableObject
 {
-    [SerializeField] private List<PickaxeData> allPickaxes = new List<PickaxeData>();
+    [SerializeField] private List<PickaxeData> allPickaxes = new();
 
     public IReadOnlyList<PickaxeData> AllPickaxes => allPickaxes;
 
-    public List<PickaxeData> GetPickaxeDatas() 
-    { 
-        return allPickaxes; 
-    }
-
-    public PickaxeData GetById(string id)
+    public PickaxeData GetById(int id)
     {
-        return allPickaxes.Find(p => p.name == id);
-    }
-
-    public PickaxeData GetByIndex(int index)
-    {
-        if (index < 0 || index >= allPickaxes.Count) return null;
-        return allPickaxes[index];
+        return allPickaxes.Find(p => p.ID == id);
     }
 }

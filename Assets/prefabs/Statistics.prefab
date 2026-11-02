@@ -330,6 +330,9 @@ MonoBehaviour:
   _durabilityText: {fileID: 6659251201180828592}
   _rangeOfDiggingText: {fileID: 6288778877455403059}
   _rewardMultiplyerText: {fileID: 1993141929419329161}
+  _damageUpgrade: {fileID: 0}
+  _durabilityUpgrade: {fileID: 0}
+  _multiplierUpgrade: {fileID: 0}
 --- !u!1 &2871695742839666461
 GameObject:
   m_ObjectHideFlags: 0
@@ -710,8 +713,8 @@ RectTransform:
   m_Children:
   - {fileID: 5367587797145133702}
   - {fileID: 8405688689378380099}
-  - {fileID: 1183935071211866258}
   - {fileID: 3093636782607249213}
+  - {fileID: 1183935071211866258}
   m_Father: {fileID: 54747895867423405}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}

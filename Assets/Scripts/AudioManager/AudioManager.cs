@@ -29,21 +29,29 @@ public class AudioManager : MonoBehaviour
     {
         GameEvents.OnButtonHovered += HandleHover;
         GameEvents.OnButtonClicked += HandleClick;
+        GameEvents.OnHitBlock += HandleHit;
     }
+
     private void OnDisable()
     {
         GameEvents.OnButtonHovered -= HandleHover;
         GameEvents.OnButtonClicked -= HandleClick;
+        GameEvents.OnHitBlock -= HandleHit;
     }
 
     private void HandleHover(GameObject button)
     {
-        PlaySoundWithRandomPitch(_sfxSource, _hoverSounds);
+        _sfxSource.PlayOneShot(_hoverSounds[0]);
     }
 
     private void HandleClick(GameObject button)
     {
-        PlaySoundWithRandomPitch(_sfxSource, _clickSounds);
+        _sfxSource.PlayOneShot(_clickSounds[0]);
+    }
+
+    private void HandleHit(Block block, int arg2)
+    {
+        PlaySoundWithRandomPitch(_sfxSource, _pickaxeSounds);
     }
 
 

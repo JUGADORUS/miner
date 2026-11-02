@@ -17,4 +17,6 @@ public static class GameEvents
     public static System.Action<GameObject> OnButtonHovered;
 
     public static System.Action<GameObject> OnButtonClicked;
+
+    public static System.Action<int> OnSessionEnded;
 }
