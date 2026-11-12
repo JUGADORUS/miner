@@ -1,5 +1,4 @@
 using UnityEngine;
-using static UnityEditor.Experimental.GraphView.GraphView;
 
 public class Pickaxe : MonoBehaviour
 {
@@ -48,7 +47,7 @@ public class Pickaxe : MonoBehaviour
         Durability = MaxDurability;
         Damage = data.Damage + damageBonus;
         RangeOfDigging = data.RangeOfDigging;
-        RewardMultiplyer = data.RewardMultiplier + multiplierBonus;
+        RewardMultiplyer = data.GetRewardMultiplier(multiplierBonus);
         Icon.sprite = data.icon;
 
         Debug.Log($"Damage: {Damage}");

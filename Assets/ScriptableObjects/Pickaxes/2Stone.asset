@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PickaxeData
   Name: Stone
   ID: 1
-  MaxDurability: 80
-  Damage: 2
-  RangeOfDigging: 2
-  RewardMultiplier: 0
-  Price: 200
+  MaxDurability: 46
+  Damage: 4
+  RangeOfDigging: 1
+  RewardMultiplier: 1.35
+  Price: 145
   icon: {fileID: -8393599773791687734, guid: 7a0fc8c48c9e80945868eaa2be1d1ba4, type: 3}

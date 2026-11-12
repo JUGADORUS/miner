@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PickaxeData
   Name: Netherite
   ID: 5
-  MaxDurability: 1000
-  Damage: 6
-  RangeOfDigging: 6
-  RewardMultiplyer: 5
-  Price: 3200
+  MaxDurability: 86
+  Damage: 12
+  RangeOfDigging: 3
+  RewardMultiplier: 2.75
+  Price: 8000
   icon: {fileID: -8231246413418021475, guid: 81243f0cc5be4fc4192e07bcef17aceb, type: 3}

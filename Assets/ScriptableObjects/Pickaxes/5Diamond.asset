@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PickaxeData
   Name: Diamond
   ID: 4
-  MaxDurability: 500
-  Damage: 5
-  RangeOfDigging: 5
-  RewardMultiplyer: 3
-  Price: 1500
+  MaxDurability: 76
+  Damage: 10
+  RangeOfDigging: 2
+  RewardMultiplier: 2.4
+  Price: 3800
   icon: {fileID: -8453244747136490063, guid: a9d28595aafb8894cb99a42082a87e2c, type: 3}

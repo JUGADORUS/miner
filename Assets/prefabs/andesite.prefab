@@ -267,10 +267,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Block
   Health: 0
-  MaxHealth: 3
-  MinReward: 0
-  MaxReward: 5
-  DamageToPickaxe: 1
+  MaxHealth: 7
+  MinReward: 2
+  MaxReward: 6
+  DamageToPickaxe: 2
   destruction: {fileID: 1226316388537411421}
 --- !u!114 &-3671037324262038994
 MonoBehaviour:

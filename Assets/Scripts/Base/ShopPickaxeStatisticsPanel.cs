@@ -13,7 +13,6 @@ public class ShopPickaxeStatisticsPanel : MonoBehaviour
     [Header("Шаблоны улучшений для расчета бонусов")]
     [SerializeField] private UpgradeData _damageUpgrade;
     [SerializeField] private UpgradeData _durabilityUpgrade;
-    [SerializeField] private UpgradeData _multiplierUpgrade;
 
     public void UpdateInfo(PickaxeData pickaxeData)
     {
@@ -26,7 +25,7 @@ public class ShopPickaxeStatisticsPanel : MonoBehaviour
 
         int finalDamage = pickaxeData.Damage + Mathf.RoundToInt(_damageUpgrade.GetBonusForLevel(damageLvl));
         int finalDurability = pickaxeData.MaxDurability + Mathf.RoundToInt(_durabilityUpgrade.GetBonusForLevel(durabilityLvl));
-        float finalMultiplier = pickaxeData.RewardMultiplier + _multiplierUpgrade.GetBonusForLevel(multiplierLvl);
+        float finalMultiplier = pickaxeData.GetRewardMultiplier(UpgradesManager.Instance.GetMultiplierBonus(pickaxeData.ID));
 
         _pickaxeIcon.sprite = pickaxeData.icon;
 

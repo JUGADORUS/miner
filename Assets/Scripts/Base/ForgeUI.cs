@@ -45,10 +45,9 @@ public class ForgeUI : MonoBehaviour
         int equippedPickaxeId = PlayerPrefs.GetInt(EquippedKey, 0);
 
         PickaxeData equippedData = _pickaxeDatabase.GetById(equippedPickaxeId);
-        if (equippedData != null)
-        {
-            _statisticsPanel.UpdateInfo(equippedData);
-        }
+        if (equippedData == null) return;
+
+        _statisticsPanel.UpdateInfo(equippedData);
 
         foreach (UpgradeData upgrade in _availableUpgrades)
         {
@@ -57,18 +56,18 @@ public class ForgeUI : MonoBehaviour
 
             item.Name.text = upgrade.upgradeName;
 
-            UpdateUpgradeButtonVisual(item, upgrade, equippedPickaxeId);
+            UpdateUpgradeButtonVisual(item, upgrade, equippedData);
 
             item.Button.onClick.RemoveAllListeners();
-            item.Button.onClick.AddListener(() => TryBuyUpgrade(item, upgrade, equippedPickaxeId));
+            item.Button.onClick.AddListener(() => TryBuyUpgrade(upgrade, equippedData));
         }
     }
 
-    private void UpdateUpgradeButtonVisual(ItemInShop item, UpgradeData upgrade, int pickaxeId)
+    private void UpdateUpgradeButtonVisual(ItemInShop item, UpgradeData upgrade, PickaxeData pickaxe)
     {
         if (upgrade == null || UpgradesManager.Instance == null) return;
 
-        int currentLvl = UpgradesManager.Instance.GetUpgradeLevel(pickaxeId, upgrade.upgradeID);
+        int currentLvl = UpgradesManager.Instance.GetUpgradeLevel(pickaxe.ID, upgrade.upgradeID);
 
         if (currentLvl >= upgrade.maxLevel)
         {
@@ -76,7 +75,7 @@ public class ForgeUI : MonoBehaviour
             return;
         }
 
-        int cost = upgrade.GetCostForLevel(currentLvl);
+        int cost = upgrade.GetCostForLevel(currentLvl, pickaxe.Price);
 
         if (_player.CanSpend(cost))
         {
@@ -88,17 +87,17 @@ public class ForgeUI : MonoBehaviour
         }
     }
 
-    private void TryBuyUpgrade(ItemInShop item, UpgradeData upgrade, int pickaxeId)
+    private void TryBuyUpgrade(UpgradeData upgrade, PickaxeData pickaxe)
     {
         if (UpgradesManager.Instance == null) return;
 
-        int currentLvl = UpgradesManager.Instance.GetUpgradeLevel(pickaxeId, upgrade.upgradeID);
+        int currentLvl = UpgradesManager.Instance.GetUpgradeLevel(pickaxe.ID, upgrade.upgradeID);
         if (currentLvl >= upgrade.maxLevel) return;
 
-        int cost = upgrade.GetCostForLevel(currentLvl);
+        int cost = upgrade.GetCostForLevel(currentLvl, pickaxe.Price);
         if (!_player.TrySpendMoney(cost)) return;
 
-        UpgradesManager.Instance.BuyUpgrade(pickaxeId, upgrade.upgradeID);
+        UpgradesManager.Instance.BuyUpgrade(pickaxe.ID, upgrade.upgradeID);
         RefreshForgeUI();
     }
 

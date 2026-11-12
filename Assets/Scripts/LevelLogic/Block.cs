@@ -9,19 +9,33 @@ public class Block : MonoBehaviour
     [SerializeField] public int DamageToPickaxe;
     [SerializeField] public Destruction destruction;
 
+    public bool IsDestroyed { get; private set; }
+
     private void Awake()
     {
         Health = MaxHealth;
     }
 
+    public void ApplyDepthBonuses(int healthBonus, int wearBonus, int rewardBonus)
+    {
+        MaxHealth += healthBonus;
+        Health = MaxHealth;
+        DamageToPickaxe += wearBonus;
+        MinReward += rewardBonus;
+        MaxReward += rewardBonus;
+    }
+
     public void TakeDamage(int damage)
     {
-        Health = Health - damage;
+        if (IsDestroyed) return;
+
+        Health -= damage;
+        IsDestroyed = Health <= 0;
 
         float healthPercent = (float)Health / MaxHealth * 100f;
         destruction.UpdateSprite(healthPercent);
 
-        if (Health <= 0)
+        if (IsDestroyed)
         {
             GameEvents.OnBlockDestroyed?.Invoke(this, transform.position);
             Destroy(gameObject);

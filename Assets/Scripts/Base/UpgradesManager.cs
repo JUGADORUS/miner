@@ -32,14 +32,28 @@ public class UpgradesManager : MonoBehaviour
 
     public int GetUpgradeLevel(int pickaxeId, string upgradeId)
     {
-        return PlayerPrefs.GetInt(GetKey(pickaxeId, upgradeId), 0);
+        int savedLevel = PlayerPrefs.GetInt(GetKey(pickaxeId, upgradeId), 0);
+        return Mathf.Clamp(savedLevel, 0, GetMaxLevel(upgradeId));
     }
 
     public void BuyUpgrade(int pickaxeId, string upgradeId)
     {
         int currentLevel = GetUpgradeLevel(pickaxeId, upgradeId);
+        if (currentLevel >= GetMaxLevel(upgradeId)) return;
+
         PlayerPrefs.SetInt(GetKey(pickaxeId, upgradeId), currentLevel + 1);
         PlayerPrefs.Save();
+    }
+
+    private int GetMaxLevel(string upgradeId)
+    {
+        return upgradeId switch
+        {
+            UpgradeIds.Damage => _damageUpgrade.maxLevel,
+            UpgradeIds.Durability => _durabilityUpgrade.maxLevel,
+            UpgradeIds.Multiplier => _multiplierUpgrade.maxLevel,
+            _ => int.MaxValue
+        };
     }
 
     private static string GetKey(int pickaxeId, string upgradeId)

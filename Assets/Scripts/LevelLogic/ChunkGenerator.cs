@@ -19,11 +19,18 @@ public class ChunkGenerator : MonoBehaviour
 
     public bool isBackground;
 
+    [Header("Depth scaling (foreground)")]
+    [SerializeField, Min(1)] private int _depthBandSize = 12;
+    [SerializeField, Min(0)] private int _healthPerBand = 2;
+    [SerializeField, Min(1)] private int _bandsPerWearIncrease = 2;
+    [SerializeField, Min(0)] private int _rewardPerBand = 1;
 
+    private Vector2Int _startCell;
     private Dictionary<Vector2Int, GameObject> blocks = new Dictionary<Vector2Int, GameObject>();
 
     void Start()
     {
+        _startCell = WorldToBlock(player.position);
     }
 
     void Update()
@@ -50,7 +57,8 @@ public class ChunkGenerator : MonoBehaviour
         int maxY = camMax.y + extraBuffer;
 
         int playerY = playerBlockPos.y;
-        maxY = Mathf.Min(maxY, playerY + heightAbove);
+        int topCell = isBackground ? playerY : _startCell.y;
+        maxY = Mathf.Min(maxY, topCell + heightAbove);
         minY = Mathf.Max(minY, playerY - heightBelow);
 
         minX = Mathf.Max(minX, playerBlockPos.x - width);
@@ -81,16 +89,33 @@ public class ChunkGenerator : MonoBehaviour
                 if (blocks.ContainsKey(pos))
                     continue;
 
-                if ((Mathf.Abs(pos.x - playerPos.x) <= 1 && Mathf.Abs(pos.y - playerPos.y) <= 2) && !isBackground)
+                if (!isBackground && Mathf.Abs(pos.x - _startCell.x) <= 1 && Mathf.Abs(pos.y - _startCell.y) <= 2)
                     continue;
 
-                if (pos.x == playerPos.x && pos.y == playerPos.y - 1)
+                if (isBackground && pos.x == playerPos.x && pos.y == playerPos.y - 1)
                     continue;
 
-                GameObject newBlock = Instantiate(GetRandomBlockPrefab(), BlockToWorld(pos), Quaternion.identity, transform);
+                Vector3 position = BlockToWorld(pos);
+                GameObject newBlock = Instantiate(GetRandomBlockPrefab(), position, Quaternion.identity, transform);
+                if (!isBackground)
+                {
+                    ApplyDepthScaling(newBlock, position.y);
+                }
+
                 blocks.Add(pos, newBlock);
             }
         }
+    }
+
+    private void ApplyDepthScaling(GameObject blockObject, float worldY)
+    {
+        int band = Mathf.FloorToInt(Mathf.Max(0f, -worldY) / Mathf.Max(1, _depthBandSize));
+        if (band == 0 || !blockObject.TryGetComponent(out Block block)) return;
+
+        block.ApplyDepthBonuses(
+            band * _healthPerBand,
+            band / Mathf.Max(1, _bandsPerWearIncrease),
+            band * _rewardPerBand);
     }
 
     GameObject GetRandomBlockPrefab()
@@ -103,7 +128,17 @@ public class ChunkGenerator : MonoBehaviour
         return blockPrefabs[Random.Range(0, blockPrefabs.Length)];
     }
 
-    Vector2Int WorldToBlock(Vector3 worldPos)
+    public Block GetBlockAt(Vector2Int cell)
+    {
+        if (!blocks.TryGetValue(cell, out GameObject blockObject) || blockObject == null || !blockObject.activeInHierarchy)
+        {
+            return null;
+        }
+
+        return blockObject.GetComponent<Block>();
+    }
+
+    public Vector2Int WorldToBlock(Vector3 worldPos)
     {
         return new Vector2Int(
             Mathf.FloorToInt(worldPos.x / blockSize),

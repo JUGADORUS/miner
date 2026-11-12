@@ -1,3 +1,4 @@
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -10,8 +11,11 @@ public class GameOverUI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _totalMoneyText;
     [SerializeField] private TextMeshProUGUI _blocksDestroyedText;
 
+    private MoneyPickupFeedback _moneyPickupFeedback;
+
     private void Awake()
     {
+        _moneyPickupFeedback = _gameUI.GetComponentInChildren<MoneyPickupFeedback>();
         GameEvents.OnSessionEnded += HandleSessionEnded;
     }
 
@@ -30,6 +34,23 @@ public class GameOverUI : MonoBehaviour
             _blocksDestroyedText.text = $"{GameManager.Instance.BlocksDestroyed}";
         }
 
+        if (_moneyPickupFeedback != null && _moneyPickupFeedback.HasActiveFeedback)
+        {
+            StartCoroutine(ShowPanelAfterCoinFeedback());
+            return;
+        }
+
+        ShowPanel();
+    }
+
+    private IEnumerator ShowPanelAfterCoinFeedback()
+    {
+        while (_moneyPickupFeedback.HasActiveFeedback) yield return null;
+        ShowPanel();
+    }
+
+    private void ShowPanel()
+    {
         _gameUI.SetActive(false);
         _panel.SetActive(true);
     }

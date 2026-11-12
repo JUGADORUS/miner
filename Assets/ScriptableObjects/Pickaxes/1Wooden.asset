@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PickaxeData
   Name: Wooden
   ID: 0
-  MaxDurability: 50
-  Damage: 1
+  MaxDurability: 36
+  Damage: 2
   RangeOfDigging: 1
-  RewardMultiplier: 0
+  RewardMultiplier: 1
   Price: 0
   icon: {fileID: -5896062227517843701, guid: 9c45c92e73b553d4bb6922067fe5dfbd, type: 3}

@@ -14,6 +14,8 @@ public static class GameEvents
 
     public static System.Action<int> OnMoneyChanged;
 
+    public static System.Action<Vector2, int> OnBlockRewarded;
+
     public static System.Action<GameObject> OnButtonHovered;
 
     public static System.Action<GameObject> OnButtonClicked;

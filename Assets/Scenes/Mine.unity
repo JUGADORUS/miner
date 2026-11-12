@@ -261,13 +261,17 @@ MonoBehaviour:
   - {fileID: 8997802028687022955, guid: 2c3e6cbafcbf40a49bf933ba85d8d86f, type: 3}
   - {fileID: 8997802028687022955, guid: 516218f8673858b43be1f9ffb9999ab0, type: 3}
   blockSize: 1
-  player: {fileID: 494917692}
+  player: {fileID: 51138910}
   mainCamera: {fileID: 519420031}
   width: 20
   heightBelow: 150
   heightAbove: 0
   extraBuffer: 5
   isBackground: 0
+  _depthBandSize: 12
+  _healthPerBand: 2
+  _bandsPerWearIncrease: 2
+  _rewardPerBand: 1
 --- !u!4 &74726378
 Transform:
   m_ObjectHideFlags: 0
@@ -309,7 +313,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3dc8a02833d4a1542b9c7decf04c6a82, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIManager
-  _moneyText: {fileID: 149578945}
   _depthText: {fileID: 342786748}
   _durabilitySlider: {fileID: 228407009}
   _settingsMenu: {fileID: 486710167}
@@ -2794,6 +2797,7 @@ GameObject:
   - component: {fileID: 820067580}
   - component: {fileID: 820067582}
   - component: {fileID: 820067581}
+  - component: {fileID: 2000000001}
   m_Layer: 5
   m_Name: MoneyFrame
   m_TagString: Untagged
@@ -2822,6 +2826,21 @@ RectTransform:
   m_AnchoredPosition: {x: 22, y: -26}
   m_SizeDelta: {x: 200, y: 80}
   m_Pivot: {x: 0, y: 1}
+--- !u!114 &2000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 820067579}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8b3a65fceeef48dbbc3d309748aba8f3, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::MoneyPickupFeedback
+  _balanceText: {fileID: 149578945}
+  _coinIcon: {fileID: 1141192459}
+  _worldCamera: {fileID: 519420031}
 --- !u!114 &820067581
 MonoBehaviour:
   m_ObjectHideFlags: 0

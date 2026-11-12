@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [CreateAssetMenu(fileName = "PickaxeData", menuName = "Scriptable Objects/PickaxeData")]
 public class PickaxeData : ScriptableObject
@@ -9,8 +10,14 @@ public class PickaxeData : ScriptableObject
     public int MaxDurability;
     public int Damage;
     public int RangeOfDigging;
+    [FormerlySerializedAs("RewardMultiplyer")]
     public float RewardMultiplier;
     public int Price;
 
     public Sprite icon;
+
+    public float GetRewardMultiplier(float upgradeBonus)
+    {
+        return Mathf.Max(1f, RewardMultiplier) + upgradeBonus;
+    }
 }
