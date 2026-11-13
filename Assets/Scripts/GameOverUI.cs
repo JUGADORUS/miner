@@ -55,6 +55,6 @@ public class GameOverUI : MonoBehaviour
         _panel.SetActive(true);
     }
 
-    public void GoToBase() => SceneManager.LoadScene("Base");
+    public void GoToBase() => SceneManager.LoadScene("BaseWorkshop");
     public void PlayAgain() => SceneManager.LoadScene("Mine");
 }

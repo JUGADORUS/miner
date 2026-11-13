@@ -38,7 +38,7 @@ public class Destruction : MonoBehaviour
 
         int index = GetSpriteIndex(healthPercent);
         index = Mathf.Clamp(index, 0, destructionSprites.Length - 1);
-        if (spriteRenderer != null && destructionSprites[index] != null)
+        if (spriteRenderer != null)
         {
             spriteRenderer.sprite = destructionSprites[index];
         }

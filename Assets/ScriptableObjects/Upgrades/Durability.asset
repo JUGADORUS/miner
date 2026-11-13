@@ -15,7 +15,7 @@ MonoBehaviour:
   upgradeID: durability
   upgradeName: Durability
   icon: {fileID: -2541579827414792756, guid: 1644bd79b0d151b4fa57d937516b1c4e, type: 3}
-  maxLevel: 2
+  maxLevel: 12
   baseCost: 4
-  costMultiplier: 1.35
+  costMultiplier: 1.6
   valuePerLevel: 3

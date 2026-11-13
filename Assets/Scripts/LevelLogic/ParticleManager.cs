@@ -1,5 +1,5 @@
+using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class ParticleManager : MonoBehaviour
 {
@@ -11,6 +11,18 @@ public class ParticleManager : MonoBehaviour
     [SerializeField] private ParticleSystem hitStonePrefab;   // Искры при ударе
     [SerializeField] private ParticleSystem breakFlashPrefab;  // Вспышка разрушения
     [SerializeField] private ParticleSystem pickaxeSparksPrefab; // Искры от кирки
+
+    private const int MaxPooledPerEffect = 64;
+
+    private readonly Dictionary<ParticleSystem, Stack<ParticleSystem>> _pools = new();
+    private readonly List<ActiveEffect> _activeEffects = new();
+
+    private struct ActiveEffect
+    {
+        public ParticleSystem Prefab;
+        public ParticleSystem Instance;
+        public float ExpiresAt;
+    }
 
     private void Awake()
     {
@@ -28,8 +40,7 @@ public class ParticleManager : MonoBehaviour
     public void SpawnRockChunks(Vector2 position)
     {
         if (rockChunksPrefab == null) return;
-        ParticleSystem chunks = Instantiate(rockChunksPrefab, position, Quaternion.identity);
-        Destroy(chunks.gameObject, 5f);
+        PlayEffect(rockChunksPrefab, position, Quaternion.identity, 5f);
     }
 
     public void SpawnBlockBreakEffects(Vector2 position)
@@ -41,9 +52,7 @@ public class ParticleManager : MonoBehaviour
     private void SpawnBreakFlash(Vector2 position)
     {
         if (breakFlashPrefab == null) return;
-        ParticleSystem flash = Instantiate(breakFlashPrefab, position, Quaternion.identity);
-        flash.Play();
-        Destroy(flash.gameObject, 0.5f);
+        PlayEffect(breakFlashPrefab, position, Quaternion.identity, 0.5f);
     }
 
     private void SpawnBlockDestroyEffects(Block block, Vector2 position)
@@ -53,7 +62,7 @@ public class ParticleManager : MonoBehaviour
 
     private void SpawnPickaxeSparkEffects(Block block, Vector2 position, Vector2 direction)
     {
-        if (hitStonePrefab == null) return;
+        if (pickaxeSparksPrefab == null) return;
 
         int x, y;
 
@@ -94,8 +103,7 @@ public class ParticleManager : MonoBehaviour
             newPosition = position + new Vector2(offset, 0f);
         }
 
-        ParticleSystem sparks = Instantiate(pickaxeSparksPrefab, newPosition, targetRotation);
-        Destroy(sparks.gameObject, 5f);
+        PlayEffect(pickaxeSparksPrefab, newPosition, targetRotation, 5f);
     }
 
     private void SpawnHitStoneEffects(Block block, Vector2 position, Vector2 direction)
@@ -145,8 +153,51 @@ public class ParticleManager : MonoBehaviour
             Time.timeScale = 0.1f;
         }
 
-        ParticleSystem sparks = Instantiate(hitStonePrefab, newPosition, targetRotation);
-        Destroy(sparks.gameObject, 5f);
+        PlayEffect(hitStonePrefab, newPosition, targetRotation, 5f);
+    }
+
+    private void PlayEffect(ParticleSystem prefab, Vector2 position, Quaternion rotation, float lifetime)
+    {
+        if (!_pools.TryGetValue(prefab, out Stack<ParticleSystem> pool))
+        {
+            pool = new Stack<ParticleSystem>();
+            _pools.Add(prefab, pool);
+        }
+
+        ParticleSystem effect = pool.Count > 0 ? pool.Pop() : Instantiate(prefab, transform);
+        effect.transform.SetPositionAndRotation(position, rotation);
+        effect.gameObject.SetActive(true);
+        effect.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        effect.Play(true);
+
+        _activeEffects.Add(new ActiveEffect
+        {
+            Prefab = prefab,
+            Instance = effect,
+            ExpiresAt = Time.time + lifetime
+        });
+    }
+
+    private void LateUpdate()
+    {
+        for (int i = _activeEffects.Count - 1; i >= 0; i--)
+        {
+            ActiveEffect active = _activeEffects[i];
+            ParticleSystem effect = active.Instance;
+            if (effect != null && Time.time < active.ExpiresAt && effect.IsAlive(true))
+                continue;
+
+            int last = _activeEffects.Count - 1;
+            _activeEffects[i] = _activeEffects[last];
+            _activeEffects.RemoveAt(last);
+            if (effect == null) continue;
+
+            effect.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            effect.gameObject.SetActive(false);
+            Stack<ParticleSystem> pool = _pools[active.Prefab];
+            if (pool.Count < MaxPooledPerEffect) pool.Push(effect);
+            else Destroy(effect.gameObject);
+        }
     }
 
     private void OnDestroy()
@@ -155,5 +206,6 @@ public class ParticleManager : MonoBehaviour
         GameEvents.OnBlockDestroyed -= SpawnBlockDestroyEffects;
         GameEvents.OnHitBlockWithDirectionPosition -= SpawnHitStoneEffects;
         GameEvents.OnHitBlockWithDirectionPosition -= SpawnPickaxeSparkEffects;
+        if (Instance == this) Instance = null;
     }
 }

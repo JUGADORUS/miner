@@ -28,10 +28,11 @@ public class UpgradeData : ScriptableObject
     /// <summary>
     /// Метод автоматически рассчитает стоимость для любого уровня
     /// </summary>
-    public int GetCostForLevel(int currentLevel, int pickaxePrice = 0)
+    public int GetCostForLevel(int currentLevel, int referencePrice = 0)
     {
-        int firstLevelCost = baseCost + Mathf.RoundToInt(pickaxePrice * 0.04f);
-        return Mathf.RoundToInt(firstLevelCost * Mathf.Pow(costMultiplier, currentLevel));
+        int firstLevelCost = Mathf.Max(baseCost, Mathf.CeilToInt(referencePrice * 0.027f));
+        double cost = firstLevelCost * System.Math.Pow(costMultiplier, currentLevel);
+        return (int)System.Math.Min(int.MaxValue, System.Math.Round(cost));
     }
 
     /// <summary>

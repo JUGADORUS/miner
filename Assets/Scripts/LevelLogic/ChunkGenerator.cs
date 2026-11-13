@@ -3,14 +3,11 @@ using UnityEngine;
 
 public class ChunkGenerator : MonoBehaviour
 {
-    [Header("Настройки блоков")]
     public GameObject[] blockPrefabs;
     public float blockSize = 1f;
 
     public Transform player;
     public Camera mainCamera;
-
-    private int lastMinX, lastMaxX, lastMinY, lastMaxY;
 
     public int width = 20;
     public int heightBelow = 15;
@@ -18,6 +15,13 @@ public class ChunkGenerator : MonoBehaviour
     public int extraBuffer = 5;
 
     public bool isBackground;
+
+    [Header("Streaming")]
+    [SerializeField, Min(0)] private int _unloadBuffer = 8;
+
+    [Header("Background")]
+    [SerializeField] private ChunkGenerator _foreground;
+    [SerializeField, Range(0f, 1f)] private float _backgroundBrightness = 0.447f;
 
     [Header("Workbench (foreground)")]
     [SerializeField] private GameObject _workbenchPrefab;
@@ -29,86 +33,175 @@ public class ChunkGenerator : MonoBehaviour
     [SerializeField, Min(1)] private int _bandsPerWearIncrease = 2;
     [SerializeField, Min(0)] private int _rewardPerBand = 1;
 
-    private Vector2Int _startCell;
-    private Dictionary<Vector2Int, GameObject> blocks = new Dictionary<Vector2Int, GameObject>();
+    private const int MaxPooledPerPrefab = 256;
 
-    void Start()
+    private Vector2Int _startCell;
+    private Vector2Int _lastPlayerCell;
+    private RectInt _lastWindow;
+    private bool _hasWindow;
+    private readonly Dictionary<Vector2Int, GameObject> blocks = new();
+    private readonly Dictionary<Vector2Int, CellState> _cells = new();
+    private readonly Dictionary<GameObject, Stack<GameObject>> _pools = new();
+    private readonly List<Vector2Int> _cellsToRelease = new();
+
+    private struct CellState
+    {
+        public GameObject Prefab;
+        public int? Health;
+        public bool Destroyed;
+    }
+
+    private void Start()
     {
         _startCell = WorldToBlock(player.position);
+        UpdateWorld();
     }
 
-    void Update()
+    private void Update()
     {
-        if (Time.frameCount % 10 == 0)
+        UpdateWorld();
+    }
+
+    private void UpdateWorld()
+    {
+        Vector2Int playerCell = WorldToBlock(player.position);
+        Vector2Int cameraMin = WorldToBlock(mainCamera.ViewportToWorldPoint(new Vector3(0, 0, 0)));
+        Vector2Int cameraMax = WorldToBlock(mainCamera.ViewportToWorldPoint(new Vector3(1, 1, 0)));
+        // Always cover the visible cells, even when the camera leads the player.
+        int minX = Mathf.Min(cameraMin.x, Mathf.Max(cameraMin.x - extraBuffer, playerCell.x - width));
+        int maxX = Mathf.Max(cameraMax.x, Mathf.Min(cameraMax.x + extraBuffer, playerCell.x + width));
+        int minY = Mathf.Min(cameraMin.y, Mathf.Max(cameraMin.y - extraBuffer, playerCell.y - heightBelow));
+        int maxY = cameraMax.y + extraBuffer;
+        var window = new RectInt(minX, minY, maxX - minX + 1, maxY - minY + 1);
+        if (_hasWindow && window == _lastWindow && playerCell == _lastPlayerCell)
+            return;
+
+        var retained = new RectInt(
+            minX - _unloadBuffer, minY - _unloadBuffer,
+            window.width + 2 * _unloadBuffer, window.height + 2 * _unloadBuffer);
+
+        ReleaseBlocks(retained);
+        GenerateBlocks(window, playerCell);
+        _hasWindow = true;
+        _lastWindow = window;
+        _lastPlayerCell = playerCell;
+    }
+
+    private void ReleaseBlocks(RectInt retained)
+    {
+        foreach (var entry in blocks)
         {
-            UpdateWorld();
+            if (entry.Value == null || !entry.Value.activeSelf || !retained.Contains(entry.Key))
+                _cellsToRelease.Add(entry.Key);
         }
-    }
 
-    void UpdateWorld()
-    {
-        Vector2Int playerBlockPos = WorldToBlock(player.position);
-
-        Vector3 bottomLeft = mainCamera.ViewportToWorldPoint(new Vector3(0, 0, 0));
-        Vector3 topRight = mainCamera.ViewportToWorldPoint(new Vector3(1, 1, 0));
-
-        Vector2Int camMin = WorldToBlock(bottomLeft);
-        Vector2Int camMax = WorldToBlock(topRight);
-
-        int minX = camMin.x - extraBuffer;
-        int maxX = camMax.x + extraBuffer;
-        int minY = camMin.y - extraBuffer;
-        int maxY = camMax.y + extraBuffer;
-
-        int playerY = playerBlockPos.y;
-        int topCell = isBackground ? playerY : _startCell.y;
-        maxY = Mathf.Min(maxY, topCell + heightAbove);
-        minY = Mathf.Max(minY, playerY - heightBelow);
-
-        minX = Mathf.Max(minX, playerBlockPos.x - width);
-        maxX = Mathf.Min(maxX, playerBlockPos.x + width);
-
-        //if (minX == lastMinX && maxX == lastMaxX && minY == lastMinY && maxY == lastMaxY)
-        //    return;
-
-        GenerateBlocks(minX, maxX, minY, maxY);
-
-        lastMinX = minX;
-        lastMaxX = maxX;
-        lastMinY = minY;
-        lastMaxY = maxY;
-    }
-
-
-    void GenerateBlocks(int minX, int maxX, int minY, int maxY)
-    {
-        Vector2Int playerPos = WorldToBlock(player.position);
-
-        for (int x = minX; x <= maxX; x++)
+        foreach (Vector2Int cell in _cellsToRelease)
         {
-            for (int y = minY; y <= maxY; y++)
+            GameObject instance = blocks[cell];
+            blocks.Remove(cell);
+            CellState state = _cells[cell];
+            if (instance == null)
             {
-                Vector2Int pos = new Vector2Int(x, y);
-
-                if (blocks.ContainsKey(pos))
-                    continue;
-
-                if (!isBackground && Mathf.Abs(pos.x - _startCell.x) <= 1 && Mathf.Abs(pos.y - _startCell.y) <= 2)
-                    continue;
-
-                if (isBackground && pos.x == playerPos.x && pos.y == playerPos.y - 1)
-                    continue;
-
-                Vector3 position = BlockToWorld(pos);
-                GameObject newBlock = Instantiate(GetRandomBlockPrefab(), position, Quaternion.identity, transform);
+                state.Destroyed = true;
+            }
+            else
+            {
                 if (!isBackground)
                 {
-                    ApplyDepthScaling(newBlock, position.y);
+                    Block block = instance.GetComponent<Block>();
+                    state.Destroyed = block.IsDestroyed;
+                    state.Health = block.Health;
                 }
 
-                blocks.Add(pos, newBlock);
+                instance.SetActive(false);
+                Stack<GameObject> pool = _pools[state.Prefab];
+                if (pool.Count < MaxPooledPerPrefab) pool.Push(instance);
+                else Destroy(instance);
             }
+
+            _cells[cell] = state;
         }
+
+        _cellsToRelease.Clear();
+    }
+
+    private void GenerateBlocks(RectInt window, Vector2Int playerCell)
+    {
+        int top = (isBackground ? playerCell.y : _startCell.y) + heightAbove;
+        for (int x = window.xMin; x < window.xMax; x++)
+        for (int y = window.yMin; y < window.yMax; y++)
+        {
+            var cell = new Vector2Int(x, y);
+            if (blocks.ContainsKey(cell)) continue;
+
+            if (!_cells.TryGetValue(cell, out CellState state))
+            {
+                if (y > top) continue;
+                if (!isBackground && Mathf.Abs(x - _startCell.x) <= 1 && Mathf.Abs(y - _startCell.y) <= 2)
+                    continue;
+                if (isBackground && x == playerCell.x && y == playerCell.y - 1)
+                    continue;
+
+                state.Prefab = GetRandomBlockPrefab();
+                if (state.Prefab == null) return;
+                _cells.Add(cell, state);
+            }
+
+            if (!state.Destroyed)
+                blocks.Add(cell, RentBlock(state, BlockToWorld(cell)));
+        }
+    }
+
+    private GameObject RentBlock(CellState state, Vector3 position)
+    {
+        GameObject prefab = state.Prefab;
+        if (!_pools.TryGetValue(prefab, out Stack<GameObject> pool))
+        {
+            pool = new Stack<GameObject>();
+            _pools.Add(prefab, pool);
+        }
+
+        GameObject instance = pool.Count > 0
+            ? pool.Pop()
+            : isBackground
+                ? CreateBackgroundTile(prefab, position)
+                : Instantiate(prefab, position, Quaternion.identity, transform);
+
+        instance.transform.position = position;
+        if (!isBackground)
+        {
+            Block block = instance.GetComponent<Block>();
+            block.PrepareForSpawn(prefab.GetComponent<Block>());
+            ApplyDepthScaling(instance, position.y);
+            block.RestoreHealth(state.Health);
+        }
+
+        instance.SetActive(true);
+        return instance;
+    }
+
+    private GameObject CreateBackgroundTile(GameObject prefab, Vector3 position)
+    {
+        var tile = new GameObject(prefab.name, typeof(SpriteRenderer));
+        tile.transform.SetParent(transform, false);
+        tile.transform.position = position;
+        tile.transform.localScale = prefab.transform.localScale;
+
+        SpriteRenderer source = prefab.GetComponent<SpriteRenderer>();
+        SpriteRenderer renderer = tile.GetComponent<SpriteRenderer>();
+        renderer.sprite = source.sprite;
+        renderer.sharedMaterial = source.sharedMaterial;
+        renderer.sortingLayerName = "Mine_Background";
+        renderer.flipX = source.flipX;
+        renderer.flipY = source.flipY;
+
+        Color color = source.color;
+        renderer.color = new Color(
+            color.r * _backgroundBrightness,
+            color.g * _backgroundBrightness,
+            color.b * _backgroundBrightness,
+            color.a);
+        return tile;
     }
 
     private void ApplyDepthScaling(GameObject blockObject, float worldY)
@@ -122,7 +215,7 @@ public class ChunkGenerator : MonoBehaviour
             band * _rewardPerBand);
     }
 
-    GameObject GetRandomBlockPrefab()
+    private GameObject GetRandomBlockPrefab()
     {
         if (!isBackground && _workbenchPrefab != null &&
             Random.Range(0, _workbenchSpawnInterval) == 0)
@@ -130,38 +223,36 @@ public class ChunkGenerator : MonoBehaviour
             return _workbenchPrefab;
         }
 
-        if (blockPrefabs.Length == 0)
+        GameObject[] prefabs = isBackground && _foreground != null ? _foreground.blockPrefabs : blockPrefabs;
+        if (prefabs == null || prefabs.Length == 0)
         {
-            Debug.LogError("Нет префабов блоков! Добавьте их в массиве blockPrefabs.");
+            Debug.LogError("ChunkGenerator has no block prefabs.", this);
             return null;
         }
-        return blockPrefabs[Random.Range(0, blockPrefabs.Length)];
+
+        return prefabs[Random.Range(0, prefabs.Length)];
     }
 
     public Block GetBlockAt(Vector2Int cell)
     {
-        if (!blocks.TryGetValue(cell, out GameObject blockObject) || blockObject == null || !blockObject.activeInHierarchy)
-        {
+        if (!blocks.TryGetValue(cell, out GameObject instance) || instance == null || !instance.activeInHierarchy)
             return null;
-        }
 
-        return blockObject.GetComponent<Block>();
+        return instance.GetComponent<Block>();
     }
 
     public Vector2Int WorldToBlock(Vector3 worldPos)
     {
         return new Vector2Int(
             Mathf.FloorToInt(worldPos.x / blockSize),
-            Mathf.FloorToInt(worldPos.y / blockSize)
-        );
+            Mathf.FloorToInt(worldPos.y / blockSize));
     }
 
-    Vector3 BlockToWorld(Vector2Int blockPos)
+    private Vector3 BlockToWorld(Vector2Int cell)
     {
         return new Vector3(
-            blockPos.x * blockSize + blockSize / 2f,
-            blockPos.y * blockSize + blockSize / 2f,
-            0f
-        );
+            (cell.x + 0.5f) * blockSize,
+            (cell.y + 0.5f) * blockSize,
+            0f);
     }
 }

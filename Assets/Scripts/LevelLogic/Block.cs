@@ -13,10 +13,28 @@ public class Block : MonoBehaviour
 
     public bool IsDestroyed { get; private set; }
     public bool RepairsPickaxe => _repairsPickaxe;
+    private bool _pooled;
 
     private void Awake()
     {
         Health = MaxHealth;
+    }
+
+    internal void PrepareForSpawn(Block prefab)
+    {
+        _pooled = true;
+        IsDestroyed = false;
+        MaxHealth = prefab.MaxHealth;
+        MinReward = prefab.MinReward;
+        MaxReward = prefab.MaxReward;
+        DamageToPickaxe = prefab.DamageToPickaxe;
+        Health = MaxHealth;
+    }
+
+    internal void RestoreHealth(int? savedHealth)
+    {
+        Health = savedHealth ?? MaxHealth;
+        UpdateDamageSprite();
     }
 
     public void ApplyDepthBonuses(int healthBonus, int wearBonus, int rewardBonus)
@@ -37,14 +55,26 @@ public class Block : MonoBehaviour
         Health -= damage;
         IsDestroyed = Health <= 0;
 
-        float healthPercent = (float)Health / MaxHealth * 100f;
-        destruction.UpdateSprite(healthPercent);
+        UpdateDamageSprite();
 
         if (IsDestroyed)
         {
-            GameEvents.OnBlockDestroyed?.Invoke(this, transform.position);
-            Destroy(gameObject);
+            try
+            {
+                GameEvents.OnBlockDestroyed?.Invoke(this, transform.position);
+            }
+            finally
+            {
+                if (_pooled) gameObject.SetActive(false);
+                else Destroy(gameObject);
+            }
         }
+    }
+
+    private void UpdateDamageSprite()
+    {
+        if (destruction != null)
+            destruction.UpdateSprite((float)Health / MaxHealth * 100f);
     }
 
     public int DetermineReward()

@@ -19,4 +19,4 @@ MonoBehaviour:
   RangeOfDigging: 1
   RewardMultiplier: 1
   Price: 0
-  icon: {fileID: -5896062227517843701, guid: 9c45c92e73b553d4bb6922067fe5dfbd, type: 3}
+  icon: {fileID: 21300000, guid: 56ddb5bd981a42869ae9eb4f491a3e30, type: 3}

@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PickaxeData
   Name: Copper
   ID: 2
-  MaxDurability: 56
-  Damage: 6
+  MaxDurability: 60
+  Damage: 10
   RangeOfDigging: 2
-  RewardMultiplier: 1.7
-  Price: 480
-  icon: {fileID: -5106348571339020513, guid: 1bf699e7e93af7c4891c9d2ced705ac9, type: 3}
+  RewardMultiplier: 3
+  Price: 520
+  icon: {fileID: 21300000, guid: b3928613e2454715addb883d2210ebb3, type: 3}

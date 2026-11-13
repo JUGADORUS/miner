@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PickaxeData
   Name: Iron
   ID: 3
-  MaxDurability: 66
-  Damage: 8
+  MaxDurability: 72
+  Damage: 14
   RangeOfDigging: 2
-  RewardMultiplier: 2.1
-  Price: 1950
-  icon: {fileID: 7551880176064049592, guid: 8e4f6033b16ee2348a3cbbbfdf9a4d48, type: 3}
+  RewardMultiplier: 4
+  Price: 1500
+  icon: {fileID: 21300000, guid: 2963d84bf79542e1a8d60428e53737bc, type: 3}

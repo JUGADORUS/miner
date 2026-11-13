@@ -75,7 +75,7 @@ public class ForgeUI : MonoBehaviour
             return;
         }
 
-        int cost = upgrade.GetCostForLevel(currentLvl, pickaxe.Price);
+        int cost = GetUpgradeCost(upgrade, currentLvl, pickaxe);
 
         if (_player.CanSpend(cost))
         {
@@ -94,11 +94,17 @@ public class ForgeUI : MonoBehaviour
         int currentLvl = UpgradesManager.Instance.GetUpgradeLevel(pickaxe.ID, upgrade.upgradeID);
         if (currentLvl >= upgrade.maxLevel) return;
 
-        int cost = upgrade.GetCostForLevel(currentLvl, pickaxe.Price);
+        int cost = GetUpgradeCost(upgrade, currentLvl, pickaxe);
         if (!_player.TrySpendMoney(cost)) return;
 
         UpgradesManager.Instance.BuyUpgrade(pickaxe.ID, upgrade.upgradeID);
         RefreshForgeUI();
+    }
+
+    private int GetUpgradeCost(UpgradeData upgrade, int currentLevel, PickaxeData pickaxe)
+    {
+        PickaxeData nextPickaxe = _pickaxeDatabase.GetById(pickaxe.ID + 1);
+        return upgrade.GetCostForLevel(currentLevel, nextPickaxe != null ? nextPickaxe.Price : pickaxe.Price);
     }
 
     private static void SetButton(ItemInShop item, string hexColor, string text, float fontSize, bool interactable)

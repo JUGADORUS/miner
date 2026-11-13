@@ -14,9 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PickaxeData
   Name: Golden
   ID: 6
-  MaxDurability: 104
-  Damage: 14
+  MaxDurability: 108
+  Damage: 26
   RangeOfDigging: 3
-  RewardMultiplier: 3.2
-  Price: 20000
-  icon: {fileID: 2576783966388108648, guid: c11c6b432fbe6f048a26ea0f2520b7c5, type: 3}
+  RewardMultiplier: 7
+  Price: 24000
+  icon: {fileID: 21300000, guid: e61b3bbd91104eea9a772af736c26198, type: 3}

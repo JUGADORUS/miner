@@ -15,7 +15,7 @@ MonoBehaviour:
   upgradeID: multiplier
   upgradeName: Multiplier
   icon: {fileID: -2541579827414792756, guid: 1644bd79b0d151b4fa57d937516b1c4e, type: 3}
-  maxLevel: 1
-  baseCost: 7
-  costMultiplier: 1
+  maxLevel: 12
+  baseCost: 4
+  costMultiplier: 1.6
   valuePerLevel: 0.25
