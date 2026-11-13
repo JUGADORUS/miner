@@ -19,6 +19,10 @@ public class ChunkGenerator : MonoBehaviour
 
     public bool isBackground;
 
+    [Header("Workbench (foreground)")]
+    [SerializeField] private GameObject _workbenchPrefab;
+    [SerializeField, Min(1)] private int _workbenchSpawnInterval = 80;
+
     [Header("Depth scaling (foreground)")]
     [SerializeField, Min(1)] private int _depthBandSize = 12;
     [SerializeField, Min(0)] private int _healthPerBand = 2;
@@ -120,6 +124,12 @@ public class ChunkGenerator : MonoBehaviour
 
     GameObject GetRandomBlockPrefab()
     {
+        if (!isBackground && _workbenchPrefab != null &&
+            Random.Range(0, _workbenchSpawnInterval) == 0)
+        {
+            return _workbenchPrefab;
+        }
+
         if (blockPrefabs.Length == 0)
         {
             Debug.LogError("Нет префабов блоков! Добавьте их в массиве blockPrefabs.");

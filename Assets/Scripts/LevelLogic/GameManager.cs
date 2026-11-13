@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
+    private const float WorkbenchRepairFraction = 0.2f;
+
     public static GameManager Instance { get; private set; }
 
     [SerializeField] private Player _player;
@@ -36,10 +38,9 @@ public class GameManager : MonoBehaviour
     {
         if (block == null || block.IsDestroyed || _pickaxe.Durability <= 0) return;
 
-        int durabilityCost = block.DamageToPickaxe;
+        _pickaxe.Durability = Mathf.Max(0, _pickaxe.Durability - block.DamageToPickaxe);
         DamageBlocks(block, contactPoint, normal);
 
-        _pickaxe.Durability = Mathf.Max(0, _pickaxe.Durability - durabilityCost);
         GameEvents.OnDurabilityChanged?.Invoke(_pickaxe.Durability, _pickaxe.MaxDurability);
 
         if (_pickaxe.Durability == 0)
@@ -88,10 +89,17 @@ public class GameManager : MonoBehaviour
 
     private void HandleBlockDestroyed(Block block, Vector2 position)
     {
+        BlocksDestroyed++;
+        if (block.RepairsPickaxe)
+        {
+            int repairAmount = Mathf.CeilToInt(_pickaxe.MaxDurability * WorkbenchRepairFraction);
+            _pickaxe.Durability = Mathf.Min(_pickaxe.MaxDurability, _pickaxe.Durability + repairAmount);
+            return;
+        }
+
         int reward = Mathf.RoundToInt(block.DetermineReward() * _pickaxe.RewardMultiplyer);
 
         RewardPerSession += reward;
-        BlocksDestroyed++;
         _player.GetReward(reward);
         if (reward > 0) GameEvents.OnBlockRewarded?.Invoke(position, reward);
     }
