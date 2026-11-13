@@ -18,5 +18,5 @@ MonoBehaviour:
   Damage: 14
   RangeOfDigging: 2
   RewardMultiplier: 4
-  Price: 1500
+  Price: 5500
   icon: {fileID: 21300000, guid: 2963d84bf79542e1a8d60428e53737bc, type: 3}

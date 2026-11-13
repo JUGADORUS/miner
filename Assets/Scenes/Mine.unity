@@ -270,6 +270,8 @@ MonoBehaviour:
   isBackground: 0
   _workbenchPrefab: {fileID: 8997802028687022955, guid: ac478b876df746a999780bf7772fc98d, type: 3}
   _workbenchSpawnInterval: 80
+  _dynamitePrefab: {fileID: 8997802028687022955, guid: f75d23d7ff744008a5ea6487afba364a, type: 3}
+  _dynamiteSpawnInterval: 120
   _depthBandSize: 12
   _healthPerBand: 2
   _bandsPerWearIncrease: 2

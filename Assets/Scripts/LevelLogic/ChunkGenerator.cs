@@ -27,6 +27,10 @@ public class ChunkGenerator : MonoBehaviour
     [SerializeField] private GameObject _workbenchPrefab;
     [SerializeField, Min(1)] private int _workbenchSpawnInterval = 80;
 
+    [Header("Dynamite (foreground)")]
+    [SerializeField] private GameObject _dynamitePrefab;
+    [SerializeField, Min(1)] private int _dynamiteSpawnInterval = 120;
+
     [Header("Depth scaling (foreground)")]
     [SerializeField, Min(1)] private int _depthBandSize = 12;
     [SerializeField, Min(0)] private int _healthPerBand = 2;
@@ -132,23 +136,45 @@ public class ChunkGenerator : MonoBehaviour
         for (int y = window.yMin; y < window.yMax; y++)
         {
             var cell = new Vector2Int(x, y);
-            if (blocks.ContainsKey(cell)) continue;
+            LoadCell(cell, playerCell, top);
+        }
+    }
 
-            if (!_cells.TryGetValue(cell, out CellState state))
-            {
-                if (y > top) continue;
-                if (!isBackground && Mathf.Abs(x - _startCell.x) <= 1 && Mathf.Abs(y - _startCell.y) <= 2)
-                    continue;
-                if (isBackground && x == playerCell.x && y == playerCell.y - 1)
-                    continue;
+    private void LoadCell(Vector2Int cell, Vector2Int playerCell, int top)
+    {
+        if (blocks.ContainsKey(cell)) return;
 
-                state.Prefab = GetRandomBlockPrefab();
-                if (state.Prefab == null) return;
-                _cells.Add(cell, state);
-            }
+        if (!_cells.TryGetValue(cell, out CellState state))
+        {
+            if (cell.y > top) return;
+            if (!isBackground && Mathf.Abs(cell.x - _startCell.x) <= 1 && Mathf.Abs(cell.y - _startCell.y) <= 2)
+                return;
+            if (isBackground && cell.x == playerCell.x && cell.y == playerCell.y - 1)
+                return;
 
-            if (!state.Destroyed)
-                blocks.Add(cell, RentBlock(state, BlockToWorld(cell)));
+            state.Prefab = GetRandomBlockPrefab();
+            if (state.Prefab == null) return;
+            _cells.Add(cell, state);
+        }
+
+        if (!state.Destroyed)
+            blocks.Add(cell, RentBlock(state, BlockToWorld(cell)));
+    }
+
+    internal void Blast(Vector2Int center, int radius)
+    {
+        if (isBackground) return;
+
+        for (int x = -radius; x <= radius; x++)
+        for (int y = -radius; y <= radius; y++)
+        {
+            if (x * x + y * y > radius * radius) continue;
+
+            Vector2Int cell = center + new Vector2Int(x, y);
+            LoadCell(cell, default, _startCell.y + heightAbove);
+            Block block = GetBlockAt(cell);
+            if (block != null && !block.IsDestroyed)
+                block.TakeDamage(block.Health);
         }
     }
 
@@ -221,6 +247,12 @@ public class ChunkGenerator : MonoBehaviour
             Random.Range(0, _workbenchSpawnInterval) == 0)
         {
             return _workbenchPrefab;
+        }
+
+        if (!isBackground && _dynamitePrefab != null &&
+            Random.Range(0, _dynamiteSpawnInterval) == 0)
+        {
+            return _dynamitePrefab;
         }
 
         GameObject[] prefabs = isBackground && _foreground != null ? _foreground.blockPrefabs : blockPrefabs;

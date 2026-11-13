@@ -1,8 +1,11 @@
+using System.Collections;
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
     private const float WorkbenchRepairFraction = 0.2f;
+    private const float DynamiteFuse = 3f;
+    private const int DynamiteRadius = 5;
 
     public static GameManager Instance { get; private set; }
 
@@ -10,6 +13,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Pickaxe _pickaxe;
 
     private ChunkGenerator _foreground;
+    private int _armedCharges;
+    private bool _pickaxeBroken;
 
     public int RewardPerSession { get; private set; }
     public int BlocksDestroyed { get; private set; }
@@ -90,8 +95,16 @@ public class GameManager : MonoBehaviour
     private void HandleBlockDestroyed(Block block, Vector2 position)
     {
         BlocksDestroyed++;
+        if (block.IsDynamite)
+        {
+            _armedCharges++;
+            StartCoroutine(Detonate(block.GetComponent<SpriteRenderer>(), position));
+            return;
+        }
+
         if (block.RepairsPickaxe)
         {
+            if (_pickaxeBroken) return;
             int repairAmount = Mathf.CeilToInt(_pickaxe.MaxDurability * WorkbenchRepairFraction);
             _pickaxe.Durability = Mathf.Min(_pickaxe.MaxDurability, _pickaxe.Durability + repairAmount);
             return;
@@ -104,8 +117,51 @@ public class GameManager : MonoBehaviour
         if (reward > 0) GameEvents.OnBlockRewarded?.Invoke(position, reward);
     }
 
+    private IEnumerator Detonate(SpriteRenderer source, Vector2 position)
+    {
+        Vector2Int cell = _foreground.WorldToBlock(position);
+        // The mined block returns to its pool independently of the fuse.
+        var charge = new GameObject("Armed Dynamite", typeof(SpriteRenderer));
+        charge.transform.SetParent(transform, false);
+        charge.transform.position = position;
+        SpriteRenderer sprite = charge.GetComponent<SpriteRenderer>();
+        sprite.sprite = source.sprite;
+        sprite.sharedMaterial = source.sharedMaterial;
+        sprite.sortingLayerID = source.sortingLayerID;
+        sprite.sortingOrder = source.sortingOrder + 1;
+        Vector3 scale = source.transform.localScale;
+        Color warning = new Color(1f, 0.5f, 0.25f);
+        float elapsed = 0f;
+        while (elapsed < DynamiteFuse)
+        {
+            float progress = elapsed / DynamiteFuse;
+            float pulse = 0.5f - 0.5f * Mathf.Cos(Mathf.PI * 2f * (progress + 5f * progress * progress));
+            charge.transform.localScale = scale * (1f + 0.18f * pulse);
+            sprite.color = Color.Lerp(Color.white, warning, pulse);
+            yield return null;
+            elapsed += Time.deltaTime;
+        }
+
+        Destroy(charge);
+        if (ParticleManager.Instance != null)
+            ParticleManager.Instance.SpawnBlockBreakEffects(position);
+        int durabilityBeforeBlast = _pickaxe.Durability;
+        _foreground.Blast(cell, DynamiteRadius);
+        if (_pickaxe.Durability != durabilityBeforeBlast)
+            GameEvents.OnDurabilityChanged?.Invoke(_pickaxe.Durability, _pickaxe.MaxDurability);
+        _armedCharges--;
+        TryEndSession();
+    }
+
     private void HandlePickaxeBroken()
     {
-        GameEvents.OnSessionEnded?.Invoke(RewardPerSession);
+        _pickaxeBroken = true;
+        TryEndSession();
+    }
+
+    private void TryEndSession()
+    {
+        if (_pickaxeBroken && _armedCharges == 0)
+            GameEvents.OnSessionEnded?.Invoke(RewardPerSession);
     }
 }

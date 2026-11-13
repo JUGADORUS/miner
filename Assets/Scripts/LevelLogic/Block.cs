@@ -10,9 +10,11 @@ public class Block : MonoBehaviour
     [SerializeField] public Destruction destruction;
 
     [SerializeField] private bool _repairsPickaxe;
+    [SerializeField] private bool _isDynamite;
 
     public bool IsDestroyed { get; private set; }
     public bool RepairsPickaxe => _repairsPickaxe;
+    public bool IsDynamite => _isDynamite;
     private bool _pooled;
 
     private void Awake()
@@ -39,7 +41,7 @@ public class Block : MonoBehaviour
 
     public void ApplyDepthBonuses(int healthBonus, int wearBonus, int rewardBonus)
     {
-        if (RepairsPickaxe) return;
+        if (RepairsPickaxe || IsDynamite) return;
 
         MaxHealth += healthBonus;
         Health = MaxHealth;

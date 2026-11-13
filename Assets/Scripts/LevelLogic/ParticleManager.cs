@@ -57,7 +57,7 @@ public class ParticleManager : MonoBehaviour
 
     private void SpawnBlockDestroyEffects(Block block, Vector2 position)
     {
-        SpawnBlockBreakEffects(position);
+        if (!block.IsDynamite) SpawnBlockBreakEffects(position);
     }
 
     private void SpawnPickaxeSparkEffects(Block block, Vector2 position, Vector2 direction)
