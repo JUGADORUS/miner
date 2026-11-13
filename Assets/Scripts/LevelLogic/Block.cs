@@ -11,10 +11,13 @@ public class Block : MonoBehaviour
 
     [SerializeField] private bool _repairsPickaxe;
     [SerializeField] private bool _isDynamite;
+    [SerializeField] private bool _isBossWall;
 
     public bool IsDestroyed { get; private set; }
     public bool RepairsPickaxe => _repairsPickaxe;
     public bool IsDynamite => _isDynamite;
+    public bool IsBossWall => _isBossWall;
+    private int _bossHits;
     private bool _pooled;
 
     private void Awake()
@@ -39,15 +42,29 @@ public class Block : MonoBehaviour
         UpdateDamageSprite();
     }
 
-    public void ApplyDepthBonuses(int healthBonus, int wearBonus, int rewardBonus)
+    internal int GetHitWear()
+    {
+        if (!IsBossWall) return DamageToPickaxe;
+
+        double wear = DamageToPickaxe * System.Math.Pow(1.1, _bossHits++);
+        return (int)System.Math.Min(int.MaxValue, System.Math.Round(wear));
+    }
+
+    public void ApplyDepthBonuses(int healthBonus, int wearBonus)
     {
         if (RepairsPickaxe || IsDynamite) return;
 
         MaxHealth += healthBonus;
         Health = MaxHealth;
         DamageToPickaxe += wearBonus;
-        MinReward += rewardBonus;
-        MaxReward += rewardBonus;
+    }
+
+    internal void ScaleBossWall(int tier)
+    {
+        double scaledHealth = MaxHealth * System.Math.Pow(2, tier - 1);
+        MaxHealth = (int)System.Math.Min(int.MaxValue, scaledHealth);
+        Health = MaxHealth;
+        DamageToPickaxe += tier - 1;
     }
 
     public void TakeDamage(int damage)

@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class SettingsManager : MonoBehaviour
 {
     [SerializeField] private TMP_Dropdown _qualityDropdown;
+    [SerializeField] private Toggle _fullscreenToggle;
     public AudioMixer mixer;
 
     public Slider masterSlider;
@@ -36,6 +37,8 @@ public class SettingsManager : MonoBehaviour
     {
         bool savedFull = PlayerPrefs.GetInt("Fullscreen", 1) == 1;
         Screen.fullScreen = savedFull;
+        if (_fullscreenToggle != null)
+            _fullscreenToggle.SetIsOnWithoutNotify(savedFull);
     }
 
     public void SetQuality(int qualityIndex)

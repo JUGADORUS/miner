@@ -269,7 +269,7 @@ MonoBehaviour:
   Health: 0
   MaxHealth: 5
   MinReward: 1
-  MaxReward: 5
+  MaxReward: 1
   DamageToPickaxe: 1
   destruction: {fileID: 8237037557443116533}
 --- !u!114 &-6675024779240695094

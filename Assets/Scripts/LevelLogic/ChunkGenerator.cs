@@ -31,13 +31,27 @@ public class ChunkGenerator : MonoBehaviour
     [SerializeField] private GameObject _dynamitePrefab;
     [SerializeField, Min(1)] private int _dynamiteSpawnInterval = 120;
 
+    [Header("Ores (foreground)")]
+    [SerializeField] private OreSpawn[] _ores = System.Array.Empty<OreSpawn>();
+
+    [Header("Boss walls (foreground)")]
+    [SerializeField] private Block _bossWallPrefab;
+
     [Header("Depth scaling (foreground)")]
     [SerializeField, Min(1)] private int _depthBandSize = 12;
     [SerializeField, Min(0)] private int _healthPerBand = 2;
     [SerializeField, Min(1)] private int _bandsPerWearIncrease = 2;
-    [SerializeField, Min(0)] private int _rewardPerBand = 1;
+
+    [System.Serializable]
+    private struct OreSpawn
+    {
+        public GameObject Prefab;
+        [Range(0f, 100f)] public float ChancePercent;
+    }
 
     private const int MaxPooledPerPrefab = 256;
+    private const int BossInterval = 60;
+    private const int BossClearance = 4;
 
     private Vector2Int _startCell;
     private Vector2Int _lastPlayerCell;
@@ -47,6 +61,7 @@ public class ChunkGenerator : MonoBehaviour
     private readonly Dictionary<Vector2Int, CellState> _cells = new();
     private readonly Dictionary<GameObject, Stack<GameObject>> _pools = new();
     private readonly List<Vector2Int> _cellsToRelease = new();
+    private readonly Dictionary<int, Block> _bossWalls = new();
 
     private struct CellState
     {
@@ -85,6 +100,8 @@ public class ChunkGenerator : MonoBehaviour
             window.width + 2 * _unloadBuffer, window.height + 2 * _unloadBuffer);
 
         ReleaseBlocks(retained);
+        if (!isBackground && _bossWallPrefab != null)
+            UpdateBossWalls(window, retained);
         GenerateBlocks(window, playerCell);
         _hasWindow = true;
         _lastWindow = window;
@@ -143,6 +160,8 @@ public class ChunkGenerator : MonoBehaviour
     private void LoadCell(Vector2Int cell, Vector2Int playerCell, int top)
     {
         if (blocks.ContainsKey(cell)) return;
+        if (!isBackground && _bossWallPrefab != null && IsBossRowOrClearance(cell.y))
+            return;
 
         if (!_cells.TryGetValue(cell, out CellState state))
         {
@@ -161,6 +180,48 @@ public class ChunkGenerator : MonoBehaviour
             blocks.Add(cell, RentBlock(state, BlockToWorld(cell)));
     }
 
+    private static bool IsBossRowOrClearance(int row)
+    {
+        int depth = -row;
+        if (depth < BossInterval - BossClearance) return false;
+
+        int offset = depth % BossInterval;
+        return offset <= BossClearance || offset >= BossInterval - BossClearance;
+    }
+
+    private void UpdateBossWalls(RectInt window, RectInt retained)
+    {
+        foreach (var entry in _bossWalls)
+        {
+            if (entry.Value != null && (entry.Key < retained.yMin || entry.Key >= retained.yMax))
+                entry.Value.gameObject.SetActive(false);
+        }
+
+        int firstTier = Mathf.Max(1, Mathf.CeilToInt(-(window.yMax - 1) / (float)BossInterval));
+        int lastTier = -window.yMin / BossInterval;
+        for (int tier = firstTier; tier <= lastTier; tier++)
+        {
+            int row = -tier * BossInterval;
+            if (!_bossWalls.TryGetValue(row, out Block wall))
+            {
+                wall = Instantiate(_bossWallPrefab, transform);
+                wall.ScaleBossWall(tier);
+                _bossWalls.Add(row, wall);
+            }
+            // A destroyed wall stays recorded, so backtracking cannot recreate it.
+            if (wall == null || wall.IsDestroyed) continue;
+
+            var collider = wall.GetComponent<BoxCollider2D>();
+            float centerX = (retained.xMin + retained.width * 0.5f) * blockSize;
+            wall.transform.position = new Vector3(centerX, (row + 0.5f) * blockSize, 0f);
+            wall.transform.localScale = Vector3.one * blockSize;
+            Vector2 size = new Vector2(retained.width, 1f);
+            collider.size = size;
+            wall.GetComponent<SpriteRenderer>().size = size;
+            wall.gameObject.SetActive(true);
+        }
+    }
+
     internal void Blast(Vector2Int center, int radius)
     {
         if (isBackground) return;
@@ -170,12 +231,47 @@ public class ChunkGenerator : MonoBehaviour
         {
             if (x * x + y * y > radius * radius) continue;
 
-            Vector2Int cell = center + new Vector2Int(x, y);
-            LoadCell(cell, default, _startCell.y + heightAbove);
-            Block block = GetBlockAt(cell);
-            if (block != null && !block.IsDestroyed)
-                block.TakeDamage(block.Health);
+            BreakCell(center + new Vector2Int(x, y));
         }
+    }
+
+    internal void BreakLine(Vector2Int cell, Vector2 travel)
+    {
+        // Starting at the cell center, visit each cell entered by the ray in order.
+        int stepX = travel.x < 0f ? -1 : 1;
+        int stepY = travel.y < 0f ? -1 : 1;
+        float intervalX = 1f / Mathf.Abs(travel.x);
+        float intervalY = 1f / Mathf.Abs(travel.y);
+        float nextX = 0.5f * intervalX;
+        float nextY = 0.5f * intervalY;
+
+        while (Mathf.Min(nextX, nextY) < 1f)
+        {
+            bool corner = Mathf.Approximately(nextX, nextY);
+            bool crossX = corner || nextX < nextY;
+            bool crossY = corner || nextY < nextX;
+            if (crossX)
+            {
+                cell.x += stepX;
+                nextX += intervalX;
+            }
+            if (crossY)
+            {
+                cell.y += stepY;
+                nextY += intervalY;
+            }
+            BreakCell(cell);
+        }
+    }
+
+    private void BreakCell(Vector2Int cell)
+    {
+        if (isBackground) return;
+
+        LoadCell(cell, default, _startCell.y + heightAbove);
+        Block block = GetBlockAt(cell);
+        if (block != null && !block.IsDestroyed)
+            block.TakeDamage(block.Health);
     }
 
     private GameObject RentBlock(CellState state, Vector3 position)
@@ -237,8 +333,7 @@ public class ChunkGenerator : MonoBehaviour
 
         block.ApplyDepthBonuses(
             band * _healthPerBand,
-            band / Mathf.Max(1, _bandsPerWearIncrease),
-            band * _rewardPerBand);
+            band / Mathf.Max(1, _bandsPerWearIncrease));
     }
 
     private GameObject GetRandomBlockPrefab()
@@ -253,6 +348,17 @@ public class ChunkGenerator : MonoBehaviour
             Random.Range(0, _dynamiteSpawnInterval) == 0)
         {
             return _dynamitePrefab;
+        }
+
+        if (!isBackground && _ores.Length > 0)
+        {
+            float roll = Random.Range(0f, 100f);
+            foreach (OreSpawn ore in _ores)
+            {
+                if (ore.Prefab == null) continue;
+                roll -= ore.ChancePercent;
+                if (roll < 0f) return ore.Prefab;
+            }
         }
 
         GameObject[] prefabs = isBackground && _foreground != null ? _foreground.blockPrefabs : blockPrefabs;
@@ -280,7 +386,7 @@ public class ChunkGenerator : MonoBehaviour
             Mathf.FloorToInt(worldPos.y / blockSize));
     }
 
-    private Vector3 BlockToWorld(Vector2Int cell)
+    internal Vector3 BlockToWorld(Vector2Int cell)
     {
         return new Vector3(
             (cell.x + 0.5f) * blockSize,
