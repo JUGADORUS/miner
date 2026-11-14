@@ -16,6 +16,17 @@ public class RunShopUI : MonoBehaviour
     [SerializeField] private Button _repair;
     [SerializeField] private TextMeshProUGUI _repairLabel;
 
+    private (Button Button, TextMeshProUGUI Label) _regeneration;
+    private (Button Button, TextMeshProUGUI Label) _criticalChance;
+    private (Button Button, TextMeshProUGUI Label) _criticalDamage;
+
+    private void Awake()
+    {
+        _regeneration = AddOffer(Upgrade.Regeneration, 1);
+        _criticalChance = AddOffer(Upgrade.CriticalChance, 2);
+        _criticalDamage = AddOffer(Upgrade.CriticalDamage, 3);
+    }
+
     private void Start()
     {
         _toggle.onClick.AddListener(Toggle);
@@ -59,6 +70,31 @@ public class RunShopUI : MonoBehaviour
         SetOffer(_damage, _damageLabel, Upgrade.Damage, "+1 Damage");
         SetOffer(_capacity, _capacityLabel, Upgrade.Capacity, "+8 Max durability");
         SetOffer(_repair, _repairLabel, Upgrade.Repair, "Repair +12");
+        SetOffer(_regeneration.Button, _regeneration.Label, Upgrade.Regeneration,
+            $"Regen +{GameManager.RunRegenerationBonus}/{GameManager.RegenerationInterval:0}s");
+        SetOffer(_criticalChance.Button, _criticalChance.Label, Upgrade.CriticalChance,
+            $"Crit chance +{GameManager.RunCriticalChanceBonus:P0}");
+        SetOffer(_criticalDamage.Button, _criticalDamage.Label, Upgrade.CriticalDamage,
+            $"Crit damage +{GameManager.RunCriticalDamageBonus:0.##}x");
+    }
+
+    private (Button, TextMeshProUGUI) AddOffer(Upgrade upgrade, int rowOffset)
+    {
+        Button button = Instantiate(_repair, _panel.transform);
+        button.name = upgrade.ToString();
+        button.onClick.AddListener(() => _run.TryBuyRunUpgrade(upgrade));
+        var repairRect = (RectTransform)_repair.transform;
+        var capacityRect = (RectTransform)_capacity.transform;
+        var rect = (RectTransform)button.transform;
+        Vector2 rowStep = repairRect.anchoredPosition - capacityRect.anchoredPosition;
+        rect.anchoredPosition = repairRect.anchoredPosition + rowStep * rowOffset;
+
+        var label = button.GetComponentInChildren<TextMeshProUGUI>(true);
+        label.enableAutoSizing = true;
+        label.fontSizeMin = 12f;
+        label.fontSizeMax = _repairLabel.fontSize;
+        label.textWrappingMode = TextWrappingModes.NoWrap;
+        return (button, label);
     }
 
     private void SetOffer(Button button, TextMeshProUGUI label, Upgrade upgrade, string description)

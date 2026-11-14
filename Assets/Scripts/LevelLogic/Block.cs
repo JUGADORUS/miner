@@ -14,6 +14,7 @@ public class Block : MonoBehaviour
     [SerializeField] private bool _isBossWall;
 
     public bool IsDestroyed { get; private set; }
+    public int MaximumHealth => MaxHealth;
     public bool RepairsPickaxe => _repairsPickaxe;
     public bool IsDynamite => _isDynamite;
     public bool IsBossWall => _isBossWall;

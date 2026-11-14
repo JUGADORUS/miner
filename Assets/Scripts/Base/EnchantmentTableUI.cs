@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -44,7 +45,7 @@ public class EnchantmentTableUI : MonoBehaviour
     {
         for (int tick = 0; tick < 6; tick++)
         {
-            EnchantmentKind candidate = (EnchantmentKind)(tick % ((int)EnchantmentKind.Luck + 1));
+            EnchantmentKind candidate = (EnchantmentKind)(tick % PickaxeEnchantments.KindCount);
             _status.text = $"{_pickaxe.Name}\n<color=#D9A8FF>{candidate}</color>";
             yield return new WaitForSecondsRealtime(0.05f + tick * 0.025f);
         }
@@ -70,19 +71,23 @@ public class EnchantmentTableUI : MonoBehaviour
             return;
         }
 
-        int level = PickaxeEnchantments.GetLevel(_pickaxe.ID);
-        string rank = level == 3 ? "III" : level == 2 ? "II" : "I";
-        EnchantmentKind kind = PickaxeEnchantments.GetKind(_pickaxe.ID);
-        string color = kind switch
+        var equipped = new List<string>(PickaxeEnchantments.KindCount);
+        for (int index = 0; index < PickaxeEnchantments.KindCount; index++)
         {
-            EnchantmentKind.Dynamite => "#FFAA73",
-            EnchantmentKind.Luck => "#FFE08C",
-            _ => "#9DDAFF"
-        };
-        string equipped = level == 0
-            ? "No enchantment"
-            : $"<color={color}>{kind} {rank}</color>";
-        _status.text = $"{_pickaxe.Name}\n{equipped}";
+            var kind = (EnchantmentKind)index;
+            int level = PickaxeEnchantments.GetLevel(_pickaxe.ID, kind);
+            if (level > 0) equipped.Add(FormatEnchantment(kind, level));
+        }
+
+        string enchantments = equipped.Count == 0 ? "No enchantment" : string.Join("\n", equipped);
+        _status.text = $"{_pickaxe.Name}\n{enchantments}";
+    }
+
+    private static string FormatEnchantment(EnchantmentKind kind, int level)
+    {
+        string rank = level == 3 ? "III" : level == 2 ? "II" : "I";
+        string color = ColorUtility.ToHtmlStringRGB(PickaxeEnchantments.GetColor(kind));
+        return $"<color=#{color}>{kind} {rank}</color>";
     }
 
     private void RefreshPrice(int balance)

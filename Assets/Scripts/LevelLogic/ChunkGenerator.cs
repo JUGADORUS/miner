@@ -50,7 +50,7 @@ public class ChunkGenerator : MonoBehaviour
     }
 
     private const int MaxPooledPerPrefab = 256;
-    private const int BossInterval = 60;
+    private const int BossInterval = 45;
     private const int BossClearance = 4;
 
     private Vector2Int _startCell;
@@ -187,6 +187,16 @@ public class ChunkGenerator : MonoBehaviour
 
         int offset = depth % BossInterval;
         return offset <= BossClearance || offset >= BossInterval - BossClearance;
+    }
+
+    internal Block GetNearbyBoss()
+    {
+        int depth = -WorldToBlock(player.position).y;
+        int row = -Mathf.RoundToInt(depth / (float)BossInterval) * BossInterval;
+        if (Mathf.Abs(depth + row) > BossClearance || !_bossWalls.TryGetValue(row, out Block wall))
+            return null;
+
+        return wall != null && !wall.IsDestroyed && wall.isActiveAndEnabled ? wall : null;
     }
 
     private void UpdateBossWalls(RectInt window, RectInt retained)

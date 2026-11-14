@@ -13,6 +13,11 @@ public class MainMenu : MonoBehaviour
         SceneManager.LoadScene(currentSceneIndex + 1);
     }
 
+    public void OpenShop()
+    {
+        SceneManager.LoadScene("BaseWorkshop");
+    }
+
     public void OpenSettings()
     {
         _settings.SetActive(true);

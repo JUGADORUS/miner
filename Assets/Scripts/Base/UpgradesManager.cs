@@ -6,6 +6,9 @@ public class UpgradesManager : MonoBehaviour
     [SerializeField] private UpgradeData _damageUpgrade;
     [SerializeField] private UpgradeData _durabilityUpgrade;
     [SerializeField] private UpgradeData _multiplierUpgrade;
+    [SerializeField] private UpgradeData _regenerationUpgrade;
+    [SerializeField] private UpgradeData _criticalDamageUpgrade;
+    [SerializeField] private UpgradeData _criticalChanceUpgrade;
 
     public static UpgradesManager Instance { get; private set; }
 
@@ -30,6 +33,20 @@ public class UpgradesManager : MonoBehaviour
     public float GetMultiplierBonus(int pickaxeId)
         => _multiplierUpgrade.GetBonusForLevel(GetUpgradeLevel(pickaxeId, UpgradeIds.Multiplier));
 
+    public int GetRegenerationBonus(int pickaxeId)
+        => _regenerationUpgrade != null
+            ? Mathf.RoundToInt(_regenerationUpgrade.GetBonusForLevel(GetUpgradeLevel(pickaxeId, UpgradeIds.Regeneration)))
+            : 0;
+
+    public float GetCriticalDamageMultiplier(int pickaxeId)
+        => GameManager.DefaultCriticalDamageMultiplier + GetBonus(_criticalDamageUpgrade, pickaxeId);
+
+    public float GetCriticalChance(int pickaxeId)
+        => Mathf.Clamp01(GetBonus(_criticalChanceUpgrade, pickaxeId));
+
+    private float GetBonus(UpgradeData upgrade, int pickaxeId)
+        => upgrade != null ? upgrade.GetBonusForLevel(GetUpgradeLevel(pickaxeId, upgrade.upgradeID)) : 0f;
+
     public int GetUpgradeLevel(int pickaxeId, string upgradeId)
     {
         int savedLevel = PlayerPrefs.GetInt(GetKey(pickaxeId, upgradeId), 0);
@@ -52,6 +69,9 @@ public class UpgradesManager : MonoBehaviour
             UpgradeIds.Damage => _damageUpgrade.maxLevel,
             UpgradeIds.Durability => _durabilityUpgrade.maxLevel,
             UpgradeIds.Multiplier => _multiplierUpgrade.maxLevel,
+            UpgradeIds.Regeneration => _regenerationUpgrade != null ? _regenerationUpgrade.maxLevel : 0,
+            UpgradeIds.CriticalDamage => _criticalDamageUpgrade != null ? _criticalDamageUpgrade.maxLevel : 0,
+            UpgradeIds.CriticalChance => _criticalChanceUpgrade != null ? _criticalChanceUpgrade.maxLevel : 0,
             _ => int.MaxValue
         };
     }

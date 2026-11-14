@@ -2585,6 +2585,9 @@ MonoBehaviour:
   _damageUpgrade: {fileID: 11400000, guid: 10f9731b74a94f945abc86f50503d686, type: 2}
   _durabilityUpgrade: {fileID: 11400000, guid: 70e08c29fae871046a75a78c02236075, type: 2}
   _multiplierUpgrade: {fileID: 11400000, guid: ee54bff82de106141a2a037a10ab516f, type: 2}
+  _regenerationUpgrade: {fileID: 11400000, guid: 4e8ef22302fb4521ad358091ef02fe39, type: 2}
+  _criticalDamageUpgrade: {fileID: 11400000, guid: b46a831d65404a00949e8ef578ecf68c, type: 2}
+  _criticalChanceUpgrade: {fileID: 11400000, guid: 1208dc43600e4b96a3133d268858394c, type: 2}
 --- !u!1 &1800305391
 GameObject:
   m_ObjectHideFlags: 0
@@ -2796,6 +2799,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 10f9731b74a94f945abc86f50503d686, type: 2}
   - {fileID: 11400000, guid: 70e08c29fae871046a75a78c02236075, type: 2}
   - {fileID: 11400000, guid: ee54bff82de106141a2a037a10ab516f, type: 2}
+  - {fileID: 11400000, guid: 4e8ef22302fb4521ad358091ef02fe39, type: 2}
+  - {fileID: 11400000, guid: b46a831d65404a00949e8ef578ecf68c, type: 2}
+  - {fileID: 11400000, guid: 1208dc43600e4b96a3133d268858394c, type: 2}
 --- !u!1 &1961648994
 GameObject:
   m_ObjectHideFlags: 0

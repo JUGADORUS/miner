@@ -384,6 +384,9 @@ MonoBehaviour:
   _damageUpgrade: {fileID: 11400000, guid: 10f9731b74a94f945abc86f50503d686, type: 2}
   _durabilityUpgrade: {fileID: 11400000, guid: 70e08c29fae871046a75a78c02236075, type: 2}
   _multiplierUpgrade: {fileID: 11400000, guid: ee54bff82de106141a2a037a10ab516f, type: 2}
+  _regenerationUpgrade: {fileID: 11400000, guid: 4e8ef22302fb4521ad358091ef02fe39, type: 2}
+  _criticalDamageUpgrade: {fileID: 11400000, guid: b46a831d65404a00949e8ef578ecf68c, type: 2}
+  _criticalChanceUpgrade: {fileID: 11400000, guid: 1208dc43600e4b96a3133d268858394c, type: 2}
 --- !u!1 &144340160
 GameObject:
   m_ObjectHideFlags: 0
@@ -4716,6 +4719,7 @@ GameObject:
   - component: {fileID: 1977347878}
   - component: {fileID: 2026123550}
   - component: {fileID: 2026123560}
+  - component: {fileID: 2026123570}
   m_Layer: 5
   m_Name: GameUI
   m_TagString: Untagged
@@ -4748,6 +4752,20 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!114 &2026123570
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1977347877}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e6b9a8db0eb4115b3d203fbec6ac37e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BossHealthUI
+  _mine: {fileID: 74726377}
+  _font: {fileID: 11400000, guid: 57a081d7998dcfe47bd8912d957954d2, type: 2}
 --- !u!1001 &3637500951534207907
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5488,8 +5506,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
-  m_AnchoredPosition: {x: -138, y: 150}
-  m_SizeDelta: {x: 244, y: 166}
+  m_AnchoredPosition: {x: -138, y: 220.5}
+  m_SizeDelta: {x: 244, y: 307}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2026123512
 MonoBehaviour:
@@ -5565,7 +5583,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 47}
+  m_AnchoredPosition: {x: 0, y: 117.5}
   m_SizeDelta: {x: 210, y: 40}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2026123522
@@ -5823,7 +5841,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 70.5}
   m_SizeDelta: {x: 210, y: 40}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2026123532
@@ -6081,7 +6099,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -47}
+  m_AnchoredPosition: {x: 0, y: 23.5}
   m_SizeDelta: {x: 210, y: 40}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2026123542

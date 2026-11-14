@@ -10,6 +10,12 @@ public class GameManager : MonoBehaviour
     private const int LightningLength = 10;
     private const float LuckDuration = 10f;
     private const float LuckBonus = 10f;
+    private const int CriticalDiggingRangeBonus = 2;
+    internal const float RegenerationInterval = 5f;
+    internal const float DefaultCriticalDamageMultiplier = 1.5f;
+    internal const int RunRegenerationBonus = 1;
+    internal const float RunCriticalChanceBonus = 0.05f;
+    internal const float RunCriticalDamageBonus = 0.25f;
 
     public static GameManager Instance { get; private set; }
 
@@ -20,12 +26,18 @@ public class GameManager : MonoBehaviour
 
     private ChunkGenerator _foreground;
     private LineRenderer _lightning;
-    private EnchantmentKind _enchantment;
-    private float _enchantmentChance;
+    private float _lightningChance;
+    private float _dynamiteChance;
+    private float _luckChance;
     private float _luckUntil;
     private Coroutine _hideLightning;
     private int _armedCharges;
     private bool _pickaxeBroken;
+    private int _regenerationAmount;
+    private float _regenerationElapsed;
+    private float _baseCriticalChance;
+    private float _criticalChance;
+    private float _criticalDamageMultiplier = DefaultCriticalDamageMultiplier;
     private Block _lastBossHit;
     private double _lastBossHitTime;
 
@@ -39,12 +51,18 @@ public class GameManager : MonoBehaviour
     private int _runDamageLevel;
     private int _runCapacityLevel;
     private int _runRepairs;
+    private int _runRegenerationLevel;
+    private int _runCriticalChanceLevel;
+    private int _runCriticalDamageLevel;
 
     public enum RunUpgrade
     {
         Damage,
         Capacity,
-        Repair
+        Repair,
+        Regeneration,
+        CriticalChance,
+        CriticalDamage
     }
 
     public int GetRunUpgradeCost(RunUpgrade upgrade)
@@ -54,6 +72,9 @@ public class GameManager : MonoBehaviour
             RunUpgrade.Damage => 6 + 4 * _runDamageLevel,
             RunUpgrade.Capacity => 8 + 5 * _runCapacityLevel,
             RunUpgrade.Repair => 5 + 3 * _runRepairs,
+            RunUpgrade.Regeneration => 8 + 5 * _runRegenerationLevel,
+            RunUpgrade.CriticalChance => 8 + 5 * _runCriticalChanceLevel,
+            RunUpgrade.CriticalDamage => 8 + 5 * _runCriticalDamageLevel,
             _ => int.MaxValue
         };
     }
@@ -61,7 +82,8 @@ public class GameManager : MonoBehaviour
     public bool CanBuyRunUpgrade(RunUpgrade upgrade)
     {
         return CanBuyRunUpgrades && RunCredits >= GetRunUpgradeCost(upgrade) &&
-            (upgrade != RunUpgrade.Repair || _pickaxe.Durability < _pickaxe.MaxDurability);
+            (upgrade != RunUpgrade.Repair || _pickaxe.Durability < _pickaxe.MaxDurability) &&
+            (upgrade != RunUpgrade.CriticalChance || _criticalChance < 1f);
     }
 
     public bool TryBuyRunUpgrade(RunUpgrade upgrade)
@@ -83,6 +105,18 @@ public class GameManager : MonoBehaviour
             case RunUpgrade.Repair:
                 _runRepairs++;
                 _pickaxe.Durability = Mathf.Min(_pickaxe.MaxDurability, _pickaxe.Durability + 12);
+                break;
+            case RunUpgrade.Regeneration:
+                _runRegenerationLevel++;
+                _regenerationAmount += RunRegenerationBonus;
+                break;
+            case RunUpgrade.CriticalChance:
+                _runCriticalChanceLevel++;
+                _criticalChance = Mathf.Clamp01(_baseCriticalChance + _runCriticalChanceLevel * RunCriticalChanceBonus);
+                break;
+            case RunUpgrade.CriticalDamage:
+                _runCriticalDamageLevel++;
+                _criticalDamageMultiplier += RunCriticalDamageBonus;
                 break;
         }
 
@@ -116,8 +150,40 @@ public class GameManager : MonoBehaviour
         if (_pickaxe.data == null) return;
 
         int id = _pickaxe.data.ID;
-        _enchantment = PickaxeEnchantments.GetKind(id);
-        _enchantmentChance = PickaxeEnchantments.GetHitChance(_enchantment, PickaxeEnchantments.GetLevel(id));
+        var upgrades = UpgradesManager.Instance;
+        if (upgrades != null)
+        {
+            _regenerationAmount = upgrades.GetRegenerationBonus(id);
+            _baseCriticalChance = upgrades.GetCriticalChance(id);
+            _criticalChance = _baseCriticalChance;
+            _criticalDamageMultiplier = upgrades.GetCriticalDamageMultiplier(id);
+        }
+
+        _lightningChance = PickaxeEnchantments.GetHitChance(EnchantmentKind.Lightning,
+            PickaxeEnchantments.GetLevel(id, EnchantmentKind.Lightning));
+        _dynamiteChance = PickaxeEnchantments.GetHitChance(EnchantmentKind.Dynamite,
+            PickaxeEnchantments.GetLevel(id, EnchantmentKind.Dynamite));
+        _luckChance = PickaxeEnchantments.GetHitChance(EnchantmentKind.Luck,
+            PickaxeEnchantments.GetLevel(id, EnchantmentKind.Luck));
+    }
+
+    private void Update()
+    {
+        if (_regenerationAmount <= 0 || !CanBuyRunUpgrades || _pickaxe.Durability >= _pickaxe.MaxDurability)
+        {
+            _regenerationElapsed = 0f;
+            return;
+        }
+
+        _regenerationElapsed += Time.deltaTime;
+        if (_regenerationElapsed < RegenerationInterval) return;
+
+        _regenerationElapsed -= RegenerationInterval;
+        int missingDurability = _pickaxe.MaxDurability - _pickaxe.Durability;
+        int restored = Mathf.Min(_regenerationAmount, missingDurability);
+        _pickaxe.Durability += restored;
+        GameEvents.OnDurabilityChanged?.Invoke(_pickaxe.Durability, _pickaxe.MaxDurability);
+        GameEvents.OnDurabilityRegenerated?.Invoke(restored);
     }
 
     private void HandleHitBlock(Block block, Vector2 contactPoint, Vector2 normal)
@@ -135,18 +201,16 @@ public class GameManager : MonoBehaviour
 
         Vector2 hitCenter = block.transform.position;
         _pickaxe.Durability = Mathf.Max(0, _pickaxe.Durability - block.GetHitWear());
-        bool triggered = _foreground != null && _enchantmentChance > 0 && Random.value * 100f < _enchantmentChance;
-        if (triggered && _enchantment == EnchantmentKind.Luck)
+        bool lightningTriggered = RollEnchantment(_lightningChance);
+        bool dynamiteTriggered = RollEnchantment(_dynamiteChance);
+        if (RollEnchantment(_luckChance))
             _luckUntil = Time.time + LuckDuration;
 
         DamageBlocks(block, contactPoint, normal);
-        if (triggered)
-        {
-            if (_enchantment == EnchantmentKind.Dynamite)
-                ArmDynamite(_dynamiteSprite, _pickaxe.transform.position + (Vector3)normal * 0.4f, DroppedDynamiteRadius, true);
-            else if (_enchantment == EnchantmentKind.Lightning)
-                StrikeLightning(_foreground.WorldToBlock(hitCenter));
-        }
+        if (dynamiteTriggered)
+            ArmDynamite(_dynamiteSprite, _pickaxe.transform.position + (Vector3)normal * 0.4f, DroppedDynamiteRadius, true);
+        if (lightningTriggered)
+            StrikeLightning(_foreground.WorldToBlock(hitCenter));
 
         GameEvents.OnDurabilityChanged?.Invoke(_pickaxe.Durability, _pickaxe.MaxDurability);
 
@@ -155,6 +219,9 @@ public class GameManager : MonoBehaviour
             GameEvents.OnPickaxeBroken?.Invoke();
         }
     }
+
+    private bool RollEnchantment(float chance) =>
+        _foreground != null && chance > 0f && Random.value * 100f < chance;
 
     private void StrikeLightning(Vector2Int cell)
     {
@@ -202,9 +269,19 @@ public class GameManager : MonoBehaviour
     private void DamageBlocks(Block hitBlock, Vector2 contactPoint, Vector2 normal)
     {
         Vector2 hitCenter = hitBlock.transform.position;
-        hitBlock.TakeDamage(_pickaxe.Damage);
-
+        int damage = _pickaxe.Damage;
         int range = _pickaxe.RangeOfDigging;
+        bool critical = _criticalChance > 0f && (_criticalChance >= 1f || Random.value < _criticalChance);
+        if (critical)
+        {
+            damage = (int)System.Math.Min(int.MaxValue,
+                System.Math.Round(damage * (double)_criticalDamageMultiplier, System.MidpointRounding.AwayFromZero));
+            range += CriticalDiggingRangeBonus;
+        }
+
+        hitBlock.TakeDamage(damage);
+        if (critical) GameEvents.OnCriticalHit?.Invoke(contactPoint, damage);
+
         if (range <= 1 || _foreground == null) return;
 
         Vector2Int hitCell = _foreground.WorldToBlock(hitCenter);
@@ -232,7 +309,7 @@ public class GameManager : MonoBehaviour
                 if (cell == hitCell) continue;
 
                 Block block = _foreground.GetBlockAt(cell);
-                if (block != null) block.TakeDamage(_pickaxe.Damage);
+                if (block != null) block.TakeDamage(damage);
             }
         }
     }

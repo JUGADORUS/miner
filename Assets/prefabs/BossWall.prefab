@@ -153,7 +153,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Block
   Health: 0
-  MaxHealth: 500
+  MaxHealth: 100
   MinReward: 35
   MaxReward: 35
   DamageToPickaxe: 2
