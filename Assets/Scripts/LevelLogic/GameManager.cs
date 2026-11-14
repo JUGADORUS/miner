@@ -49,9 +49,12 @@ public class GameManager : MonoBehaviour
     public int BlocksDestroyed { get; private set; }
     public float LuckTimeLeft => Mathf.Max(0f, _luckUntil - Time.time);
     public int RunCredits { get; private set; }
+    internal bool HasFullDurability => _pickaxe.Durability >= _pickaxe.MaxDurability;
     internal int DashChargeHits { get; private set; } = DashHitsRequired;
     public bool CanBuyRunUpgrades => !_pickaxeBroken && _pickaxe.Durability > 0;
     public event System.Action RunShopChanged;
+    internal event System.Action<Vector2> Dashed;
+    internal event System.Action<Vector2, float> DynamiteExploded;
 
     private int _runDamageLevel;
     private int _runCapacityLevel;
@@ -87,7 +90,7 @@ public class GameManager : MonoBehaviour
     public bool CanBuyRunUpgrade(RunUpgrade upgrade)
     {
         return CanBuyRunUpgrades && RunCredits >= GetRunUpgradeCost(upgrade) &&
-            (upgrade != RunUpgrade.Repair || _pickaxe.Durability < _pickaxe.MaxDurability) &&
+            (upgrade != RunUpgrade.Repair || !HasFullDurability) &&
             (upgrade != RunUpgrade.CriticalChance || _criticalChance < 1f);
     }
 
@@ -180,7 +183,7 @@ public class GameManager : MonoBehaviour
 
     private void UpdateRegeneration(float deltaTime)
     {
-        if (_regenerationAmount <= 0 || !CanBuyRunUpgrades || _pickaxe.Durability >= _pickaxe.MaxDurability)
+        if (_regenerationAmount <= 0 || !CanBuyRunUpgrades || HasFullDurability)
         {
             _regenerationProgress = 0f;
             return;
@@ -256,7 +259,9 @@ public class GameManager : MonoBehaviour
         if (direction.sqrMagnitude < 0.0001f) return false;
 
         DashChargeHits = 0;
-        _pickaxeBody.linearVelocity = direction.normalized * DashSpeed;
+        direction.Normalize();
+        _pickaxeBody.linearVelocity = direction * DashSpeed;
+        Dashed?.Invoke(direction);
         return true;
     }
 
@@ -436,8 +441,7 @@ public class GameManager : MonoBehaviour
         Vector2 position = charge.position;
         charge.gameObject.SetActive(false);
         Destroy(charge.gameObject);
-        if (ParticleManager.Instance != null)
-            ParticleManager.Instance.SpawnBlockBreakEffects(position);
+        DynamiteExploded?.Invoke(position, radius * _foreground.blockSize);
         int durabilityBeforeBlast = _pickaxe.Durability;
         _foreground.Blast(_foreground.WorldToBlock(position), radius);
         if (_pickaxe.Durability != durabilityBeforeBlast)

@@ -16,6 +16,9 @@ public class ParticleManager : MonoBehaviour
 
     private readonly Dictionary<ParticleSystem, Stack<ParticleSystem>> _pools = new();
     private readonly List<ActiveEffect> _activeEffects = new();
+    private readonly RockFragmentMeshes _rockFragments = new();
+    private MaterialPropertyBlock _rockProperties;
+    private static readonly int MainTexture = Shader.PropertyToID("_MainTex");
 
     private struct ActiveEffect
     {
@@ -37,15 +40,15 @@ public class ParticleManager : MonoBehaviour
         GameEvents.OnHitBlockWithDirectionPosition += SpawnPickaxeSparkEffects;
     }
 
-    public void SpawnRockChunks(Vector2 position)
+    public void SpawnRockChunks(Vector2 position, Sprite sprite = null)
     {
         if (rockChunksPrefab == null) return;
-        PlayEffect(rockChunksPrefab, position, Quaternion.identity, 5f);
+        PlayEffect(rockChunksPrefab, position, Quaternion.identity, 5f, rockFragments: true, sprite: sprite);
     }
 
-    public void SpawnBlockBreakEffects(Vector2 position)
+    public void SpawnBlockBreakEffects(Vector2 position, Sprite sprite = null)
     {
-        SpawnRockChunks(position);
+        SpawnRockChunks(position, sprite);
         SpawnBreakFlash(position);
     }
 
@@ -57,7 +60,8 @@ public class ParticleManager : MonoBehaviour
 
     private void SpawnBlockDestroyEffects(Block block, Vector2 position)
     {
-        if (!block.IsDynamite) SpawnBlockBreakEffects(position);
+        if (!block.IsDynamite)
+            SpawnBlockBreakEffects(position, GetBlockSprite(block));
     }
 
     private void SpawnPickaxeSparkEffects(Block block, Vector2 position, Vector2 direction)
@@ -149,10 +153,15 @@ public class ParticleManager : MonoBehaviour
             newPosition = position + new Vector2(offset, 0f);
         }
 
-        PlayEffect(hitStonePrefab, newPosition, targetRotation, 5f);
+        PlayEffect(hitStonePrefab, newPosition, targetRotation, 5f,
+            rockFragments: true, sprite: GetBlockSprite(block));
     }
 
-    private void PlayEffect(ParticleSystem prefab, Vector2 position, Quaternion rotation, float lifetime)
+    private static Sprite GetBlockSprite(Block block) =>
+        block != null && block.TryGetComponent(out SpriteRenderer renderer) ? renderer.sprite : null;
+
+    private void PlayEffect(ParticleSystem prefab, Vector2 position, Quaternion rotation, float lifetime,
+        bool rockFragments = false, Sprite sprite = null)
     {
         if (!_pools.TryGetValue(prefab, out Stack<ParticleSystem> pool))
         {
@@ -164,6 +173,7 @@ public class ParticleManager : MonoBehaviour
         effect.transform.SetPositionAndRotation(position, rotation);
         effect.gameObject.SetActive(true);
         effect.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        if (rockFragments) ApplyRockFragments(effect.GetComponent<ParticleSystemRenderer>(), sprite);
         effect.Play(true);
 
         _activeEffects.Add(new ActiveEffect
@@ -172,6 +182,20 @@ public class ParticleManager : MonoBehaviour
             Instance = effect,
             ExpiresAt = Time.time + lifetime
         });
+    }
+
+    private void ApplyRockFragments(ParticleSystemRenderer renderer, Sprite sprite)
+    {
+        renderer.renderMode = ParticleSystemRenderMode.Mesh;
+        renderer.alignment = ParticleSystemRenderSpace.View;
+        renderer.enableGPUInstancing = false;
+        renderer.SetMeshes(_rockFragments.Get(sprite));
+        renderer.meshDistribution = ParticleSystemMeshDistribution.UniformRandom;
+
+        _rockProperties ??= new MaterialPropertyBlock();
+        _rockProperties.Clear();
+        if (sprite != null) _rockProperties.SetTexture(MainTexture, sprite.texture);
+        renderer.SetPropertyBlock(_rockProperties);
     }
 
     private void LateUpdate()
@@ -202,6 +226,7 @@ public class ParticleManager : MonoBehaviour
         GameEvents.OnBlockDestroyed -= SpawnBlockDestroyEffects;
         GameEvents.OnHitBlockWithDirectionPosition -= SpawnHitStoneEffects;
         GameEvents.OnHitBlockWithDirectionPosition -= SpawnPickaxeSparkEffects;
+        _rockFragments.Release();
         if (Instance == this) Instance = null;
     }
 }

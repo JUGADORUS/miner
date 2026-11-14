@@ -237,6 +237,7 @@ GameObject:
   - component: {fileID: 74726382}
   - component: {fileID: 74726383}
   - component: {fileID: 74726384}
+  - component: {fileID: 74726385}
   m_Layer: 0
   m_Name: logic
   m_TagString: Untagged
@@ -371,6 +372,20 @@ MonoBehaviour:
   hitStonePrefab: {fileID: 4524786671417373204, guid: ff58fc3967ef5104d8f66904cd7bc7ca, type: 3}
   breakFlashPrefab: {fileID: 0}
   pickaxeSparksPrefab: {fileID: 4524786671417373204, guid: bbd891377506bbe4da2ccf8d6ee6da3c, type: 3}
+--- !u!114 &74726385
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 74726376}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36c8ea0d7f10430fa8c4d09c83603dae, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::DynamiteExplosionFeedback
+  _run: {fileID: 74726379}
+  _material: {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
 --- !u!114 &74726382
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5687,6 +5702,7 @@ GameObject:
   - component: {fileID: 2026123571}
   - component: {fileID: 2026123572}
   - component: {fileID: 2026123573}
+  - component: {fileID: 2026123574}
   m_Layer: 5
   m_Name: GameUI
   m_TagString: Untagged
@@ -5778,6 +5794,21 @@ MonoBehaviour:
   _worldCamera: {fileID: 519420031}
   _font: {fileID: 11400000, guid: 57a081d7998dcfe47bd8912d957954d2, type: 2}
   _frame: {fileID: 21300000, guid: bbd9116db663425f8e333448c764f14f, type: 3}
+--- !u!114 &2026123574
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1977347877}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c14ec98a45da4d5fa9b77f21327b21a9, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::DashFeedback
+  _run: {fileID: 74726379}
+  _pickaxeIcon: {fileID: 1885237022}
+  _effectMaterial: {fileID: 2100000, guid: 9dfc825aed78fcd4ba02077103263b40, type: 2}
 --- !u!1001 &3637500951534207907
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -7139,7 +7170,7 @@ MonoBehaviour:
     m_HighlightedColor: {r: 1, g: 1, b: 1, a: 1}
     m_PressedColor: {r: 0.780392, g: 0.713725, b: 0.639216, a: 1}
     m_SelectedColor: {r: 1, g: 1, b: 1, a: 1}
-    m_DisabledColor: {r: 0.78431374, g: 0.78431374, b: 0.78431374, a: 0.5019608}
+    m_DisabledColor: {r: 0.45, g: 0.45, b: 0.45, a: 0.7}
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
   m_SpriteState:

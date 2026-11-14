@@ -57,7 +57,7 @@ public class RunShopUI : MonoBehaviour
     private void RefreshDurability(int current, int maximum)
     {
         if (_panel.activeSelf)
-            _repair.interactable = _run.CanBuyRunUpgrade(Upgrade.Repair);
+            RefreshRepairOffer();
     }
 
     private void Refresh()
@@ -69,13 +69,22 @@ public class RunShopUI : MonoBehaviour
 
         SetOffer(_damage, _damageLabel, Upgrade.Damage, "+1 Damage");
         SetOffer(_capacity, _capacityLabel, Upgrade.Capacity, "+8 Max durability");
-        SetOffer(_repair, _repairLabel, Upgrade.Repair, "Repair +12");
+        RefreshRepairOffer();
         SetOffer(_regeneration.Button, _regeneration.Label, Upgrade.Regeneration,
             $"Regen +{GameManager.RunRegenerationBonus}/s");
         SetOffer(_criticalChance.Button, _criticalChance.Label, Upgrade.CriticalChance,
             $"Crit chance +{GameManager.RunCriticalChanceBonus:P0}");
         SetOffer(_criticalDamage.Button, _criticalDamage.Label, Upgrade.CriticalDamage,
             $"Crit damage +{GameManager.RunCriticalDamageBonus:0.##}x");
+    }
+
+    private void RefreshRepairOffer()
+    {
+        _repair.interactable = _run.CanBuyRunUpgrade(Upgrade.Repair);
+        string label = _run.HasFullDurability
+            ? "Full durability"
+            : $"Repair +12   {_run.GetRunUpgradeCost(Upgrade.Repair)} RP";
+        if (_repairLabel.text != label) _repairLabel.text = label;
     }
 
     private (Button, TextMeshProUGUI) AddOffer(Upgrade upgrade, int rowOffset)
