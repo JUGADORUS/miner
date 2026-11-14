@@ -124,9 +124,11 @@ public class RunPauseMenu : MonoBehaviour
     private void CreateMenu()
     {
         _gameControls = _gameUI.gameObject.AddComponent<CanvasGroup>();
-        _pauseButton = AddButton(_gameUI, "Pause", new Vector2(-69f, -36f), new Vector2(110f, 28f), Pause);
+        _pauseButton = AddButton(_gameUI, "Pause", Vector2.zero, new Vector2(184f, 52f), Pause);
         var pauseRect = (RectTransform)_pauseButton.transform;
         pauseRect.anchorMin = pauseRect.anchorMax = Vector2.one;
+        pauseRect.pivot = Vector2.one;
+        pauseRect.anchoredPosition = new Vector2(-16f, -14f);
 
         var overlay = AddImage(_settingsMenu.transform.parent, "Pause Overlay", new Color32(12, 8, 13, 180));
         var overlayRect = overlay.rectTransform;
@@ -189,7 +191,7 @@ public class RunPauseMenu : MonoBehaviour
             pressedSprite = _buttonPressedSprite
         };
         button.onClick.AddListener(action);
-        AddLabel(rect, label, Vector2.zero, size, size.y < 32f ? 16f : 20f);
+        AddLabel(rect, label, Vector2.zero, size, size.y >= 52f ? 24f : 20f);
         return button;
     }
 

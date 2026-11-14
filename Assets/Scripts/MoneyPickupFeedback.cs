@@ -8,6 +8,7 @@ public class MoneyPickupFeedback : MonoBehaviour
     [SerializeField] private GameManager _run;
     [SerializeField] private TextMeshProUGUI _balanceText;
     [SerializeField] private Image _coinIcon;
+    [SerializeField] private Sprite _flyingCoinSprite;
     [SerializeField] private Camera _worldCamera;
 
     private const float TossDuration = 0.16f;
@@ -83,6 +84,8 @@ public class MoneyPickupFeedback : MonoBehaviour
 
     private void LaunchCoin(Vector2 worldPosition, int reward)
     {
+        if (_flyingCoinSprite == null) return;
+
         Vector3 screenPoint = _worldCamera.WorldToScreenPoint(worldPosition);
         Camera uiCamera = _canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : _canvas.worldCamera;
         if (screenPoint.z <= 0f ||
@@ -115,7 +118,7 @@ public class MoneyPickupFeedback : MonoBehaviour
         var obj = new GameObject("Flying Coin", typeof(RectTransform), typeof(Image));
         obj.layer = gameObject.layer;
         var image = obj.GetComponent<Image>();
-        image.sprite = _coinIcon.sprite;
+        image.sprite = _flyingCoinSprite;
         image.raycastTarget = false;
         image.preserveAspect = true;
         image.rectTransform.SetParent(_flightParent, false);

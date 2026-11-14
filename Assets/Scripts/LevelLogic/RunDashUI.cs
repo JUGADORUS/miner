@@ -24,25 +24,26 @@ public class RunDashUI : MonoBehaviour
         frame.sprite = _frame;
         _indicator = frame.rectTransform;
         _indicator.anchorMin = _indicator.anchorMax = Vector2.one;
-        _indicator.anchoredPosition = new Vector2(-89f, -85f);
-        _indicator.sizeDelta = new Vector2(146f, 52f);
+        _indicator.pivot = Vector2.one;
+        _indicator.anchoredPosition = new Vector2(-16f, -76f);
+        _indicator.sizeDelta = new Vector2(184f, 68f);
 
         var title = new GameObject("Dash Status", typeof(RectTransform), typeof(TextMeshProUGUI));
         title.layer = gameObject.layer;
         title.transform.SetParent(_indicator, false);
         _label = title.GetComponent<TextMeshProUGUI>();
-        _label.rectTransform.anchoredPosition = new Vector2(0f, 8f);
-        _label.rectTransform.sizeDelta = new Vector2(134f, 22f);
+        _label.rectTransform.anchoredPosition = new Vector2(0f, 10f);
+        _label.rectTransform.sizeDelta = new Vector2(160f, 28f);
         _label.font = _font;
-        _label.fontSize = 15f;
+        _label.fontSize = 20f;
         _label.alignment = TextAlignmentOptions.Center;
         _label.raycastTarget = false;
 
         for (int index = 0; index < _segments.Length; index++)
         {
             Image segment = AddImage(_indicator, "Charge Segment");
-            segment.rectTransform.anchoredPosition = new Vector2((index - 1) * 32f, -12f);
-            segment.rectTransform.sizeDelta = new Vector2(27f, 6f);
+            segment.rectTransform.anchoredPosition = new Vector2((index - 1) * 41f, -15f);
+            segment.rectTransform.sizeDelta = new Vector2(35f, 8f);
             _segments[index] = segment;
         }
 
