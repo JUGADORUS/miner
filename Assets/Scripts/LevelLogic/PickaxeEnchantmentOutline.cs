@@ -1,47 +1,50 @@
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 public class PickaxeEnchantmentOutline : MonoBehaviour
 {
     [SerializeField] private Pickaxe _pickaxe;
     [SerializeField] private Material _unlitSpriteMaterial;
 
-    private const int OutlineSamples = 16;
+    private Sprite _coloredOutline;
 
     private void Start()
     {
+        PickaxeData data = _pickaxe.data;
         SpriteRenderer icon = _pickaxe.Icon;
-        if (_pickaxe.data == null || icon.sprite == null) return;
+        if (data == null || icon == null || icon.sprite == null || data.EnchantmentOutline == null) return;
 
-        var colors = new List<Color32>(PickaxeEnchantments.KindCount);
-        for (int index = 0; index < PickaxeEnchantments.KindCount; index++)
-        {
-            var kind = (EnchantmentKind)index;
-            if (PickaxeEnchantments.GetLevel(_pickaxe.data.ID, kind) > 0)
-                colors.Add(PickaxeEnchantments.GetColor(kind));
-        }
+        Color32[] colors = EnchantmentOutlineSprite.GetEquippedColors(data.ID);
+        if (colors.Length == 0) return;
 
-        if (colors.Count == 0) return;
-
-        var outline = new GameObject("Enchantment Outline");
+        var outline = new GameObject("Enchantment Outline", typeof(SpriteRenderer));
         outline.transform.SetParent(icon.transform, false);
-        float radius = 1.25f / icon.sprite.pixelsPerUnit;
-        int samples = OutlineSamples + OutlineSamples % 3;
-        for (int index = 0; index < samples; index++)
-        {
-            float angle = index * (2f * Mathf.PI / samples);
-            var part = new GameObject("Outline Segment", typeof(SpriteRenderer));
-            part.transform.SetParent(outline.transform, false);
-            part.transform.localPosition = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
+        _coloredOutline = EnchantmentOutlineSprite.Create(data.EnchantmentOutline, colors);
+        var renderer = outline.GetComponent<SpriteRenderer>();
+        renderer.sprite = _coloredOutline;
+        renderer.flipX = icon.flipX;
+        renderer.flipY = icon.flipY;
+        renderer.sharedMaterial = _unlitSpriteMaterial;
+        renderer.sortingLayerID = icon.sortingLayerID;
+        renderer.sortingOrder = icon.sortingOrder + 1;
 
-            var renderer = part.GetComponent<SpriteRenderer>();
-            renderer.sprite = icon.sprite;
-            renderer.flipX = icon.flipX;
-            renderer.flipY = icon.flipY;
-            renderer.sharedMaterial = _unlitSpriteMaterial;
-            renderer.sortingLayerID = icon.sortingLayerID;
-            renderer.sortingOrder = icon.sortingOrder - 1;
-            renderer.color = colors[index * colors.Count / samples];
+        for (int index = 0; index < colors.Length; index++)
+        {
+            var glow = new GameObject("Enchantment Glow", typeof(Light2D));
+            glow.transform.SetParent(outline.transform, false);
+            float offset = (index - (colors.Length - 1) * 0.5f) * 0.48f;
+            glow.transform.localPosition = new Vector3(
+                icon.flipX ? -offset * 0.5f : offset * 0.5f, icon.flipY ? -offset : offset);
+
+            var light = glow.GetComponent<Light2D>();
+            light.lightType = Light2D.LightType.Point;
+            light.targetSortingLayers = new[] { icon.sortingLayerID };
+            light.color = colors[index];
+            light.intensity = 0.85f / colors.Length;
+            light.pointLightInnerRadius = 0.15f;
+            light.pointLightOuterRadius = 1.8f;
         }
     }
+
+    private void OnDestroy() => EnchantmentOutlineSprite.Release(_coloredOutline);
 }

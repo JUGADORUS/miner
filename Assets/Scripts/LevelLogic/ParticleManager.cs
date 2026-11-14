@@ -123,7 +123,7 @@ public class ParticleManager : MonoBehaviour
             y = Mathf.RoundToInt(direction.y);
         }
 
-        Vector2 newPosition = new Vector2(0f, 0f);
+        Vector2 newPosition = position;
         float offset = 0.3f;
 
         Quaternion targetRotation = Quaternion.Euler(0, 0, 0);
@@ -147,10 +147,6 @@ public class ParticleManager : MonoBehaviour
         {
             targetRotation = Quaternion.Euler(90, 90, 0);
             newPosition = position + new Vector2(offset, 0f);
-        }
-        else
-        {
-            Time.timeScale = 0.1f;
         }
 
         PlayEffect(hitStonePrefab, newPosition, targetRotation, 5f);

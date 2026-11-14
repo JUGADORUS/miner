@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 public class MoneyPickupFeedback : MonoBehaviour
 {
+    [SerializeField] private GameManager _run;
     [SerializeField] private TextMeshProUGUI _balanceText;
     [SerializeField] private Image _coinIcon;
     [SerializeField] private Camera _worldCamera;
@@ -13,11 +14,11 @@ public class MoneyPickupFeedback : MonoBehaviour
     private const float PulseDuration = 0.22f;
 
     private readonly List<FlyingCoin> _coins = new();
+    private readonly Stack<FlyingCoin> _coinPool = new();
     private RectTransform _flightParent;
     private Canvas _canvas;
     private Quaternion _restRotation;
     private Vector3 _restScale;
-    private int _balance;
     private int _pendingReward;
     private int? _shownBalance;
     private int _spreadIndex;
@@ -45,20 +46,17 @@ public class MoneyPickupFeedback : MonoBehaviour
 
     private void OnEnable()
     {
-        _balance = PlayerPrefs.GetInt("PlayerMoney", 0);
         RefreshBalance();
-        GameEvents.OnMoneyChanged += UpdateBalance;
         GameEvents.OnBlockRewarded += LaunchCoin;
     }
 
     private void OnDisable()
     {
-        GameEvents.OnMoneyChanged -= UpdateBalance;
         GameEvents.OnBlockRewarded -= LaunchCoin;
 
         foreach (FlyingCoin coin in _coins)
         {
-            if (coin.View != null) Destroy(coin.View.gameObject);
+            ReleaseCoin(coin);
         }
 
         _coins.Clear();
@@ -66,14 +64,17 @@ public class MoneyPickupFeedback : MonoBehaviour
         ResetPulse();
     }
 
-    private void UpdateBalance(int balance)
+    private void OnDestroy()
     {
-        _balance = balance;
+        foreach (FlyingCoin coin in _coinPool)
+        {
+            if (coin.View != null) Destroy(coin.View.gameObject);
+        }
     }
 
     private void RefreshBalance()
     {
-        int visibleBalance = _balance - _pendingReward;
+        int visibleBalance = _run.RewardPerSession - _pendingReward;
         if (_shownBalance == visibleBalance) return;
 
         _shownBalance = visibleBalance;
@@ -90,30 +91,42 @@ public class MoneyPickupFeedback : MonoBehaviour
             return;
         }
 
-        var coinObject = new GameObject("Flying Coin", typeof(RectTransform), typeof(Image));
-        coinObject.layer = gameObject.layer;
-
-        Image image = coinObject.GetComponent<Image>();
-        image.sprite = _coinIcon.sprite;
-        image.raycastTarget = false;
-        image.preserveAspect = true;
-
-        RectTransform view = image.rectTransform;
-        view.SetParent(_flightParent, false);
+        FlyingCoin coin = _coinPool.Count > 0 ? _coinPool.Pop() : CreateCoin();
+        RectTransform view = coin.View;
         view.sizeDelta = _coinIcon.rectTransform.rect.size * 0.8f;
         view.localPosition = origin;
+        view.localScale = Vector3.one;
+        view.SetAsLastSibling();
 
         int spread = _spreadIndex - 2;
         _spreadIndex = (_spreadIndex + 1) % 5;
-        _coins.Add(new FlyingCoin
-        {
-            View = view,
-            Origin = origin,
-            TossEnd = origin + new Vector2(spread * 17f, 40f + Mathf.Abs(spread) * 6f),
-            Reward = reward,
-            TravelDuration = 0.42f + Mathf.Abs(spread) * 0.04f
-        });
+        coin.Origin = origin;
+        coin.TossEnd = origin + new Vector2(spread * 17f, 40f + Mathf.Abs(spread) * 6f);
+        coin.Reward = reward;
+        coin.TravelDuration = 0.42f + Mathf.Abs(spread) * 0.04f;
+        coin.Elapsed = 0f;
+        view.gameObject.SetActive(true);
+        _coins.Add(coin);
         _pendingReward += reward;
+    }
+
+    private FlyingCoin CreateCoin()
+    {
+        var obj = new GameObject("Flying Coin", typeof(RectTransform), typeof(Image));
+        obj.layer = gameObject.layer;
+        var image = obj.GetComponent<Image>();
+        image.sprite = _coinIcon.sprite;
+        image.raycastTarget = false;
+        image.preserveAspect = true;
+        image.rectTransform.SetParent(_flightParent, false);
+        return new FlyingCoin { View = image.rectTransform };
+    }
+
+    private void ReleaseCoin(FlyingCoin coin)
+    {
+        if (coin.View == null) return;
+        coin.View.gameObject.SetActive(false);
+        _coinPool.Push(coin);
     }
 
     private void LateUpdate()
@@ -153,7 +166,7 @@ public class MoneyPickupFeedback : MonoBehaviour
 
             _pendingReward -= coin.Reward;
             _coins.RemoveAt(i);
-            Destroy(coin.View.gameObject);
+            ReleaseCoin(coin);
             _pulseTimeLeft = PulseDuration;
         }
     }

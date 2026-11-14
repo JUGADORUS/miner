@@ -71,7 +71,7 @@ public class RunShopUI : MonoBehaviour
         SetOffer(_capacity, _capacityLabel, Upgrade.Capacity, "+8 Max durability");
         SetOffer(_repair, _repairLabel, Upgrade.Repair, "Repair +12");
         SetOffer(_regeneration.Button, _regeneration.Label, Upgrade.Regeneration,
-            $"Regen +{GameManager.RunRegenerationBonus}/{GameManager.RegenerationInterval:0}s");
+            $"Regen +{GameManager.RunRegenerationBonus}/s");
         SetOffer(_criticalChance.Button, _criticalChance.Label, Upgrade.CriticalChance,
             $"Crit chance +{GameManager.RunCriticalChanceBonus:P0}");
         SetOffer(_criticalDamage.Button, _criticalDamage.Label, Upgrade.CriticalDamage,

@@ -1,13 +1,11 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
 {
     [SerializeField] private TextMeshProUGUI _depthText;
     [SerializeField] private Slider _durabilitySlider;
-    [SerializeField] private GameObject _settingsMenu;
 
     private const float DurabilityHitDuration = 0.24f;
     private const float DurabilityHitAngle = 3f;
@@ -52,25 +50,6 @@ public class UIManager : MonoBehaviour
     private void Update()
     {
         UpdateDurabilityHitFeedback(Time.unscaledDeltaTime);
-
-        if (Keyboard.current == null) return;
-        if (!Keyboard.current.escapeKey.wasPressedThisFrame) return;
-
-        if (_settingsMenu.activeSelf)
-        {
-            CloseSettings();
-        }
-        else
-        {
-            _settingsMenu.SetActive(true);
-            Time.timeScale = 0f;
-        }
-    }
-
-    public void CloseSettings()
-    {
-        _settingsMenu.SetActive(false);
-        Time.timeScale = 1f;
     }
 
     private void HandleBlockDestroyed(Block block, Vector2 position)

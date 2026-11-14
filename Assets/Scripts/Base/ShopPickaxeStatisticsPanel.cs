@@ -9,6 +9,9 @@ public class ShopPickaxeStatisticsPanel : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _durabilityText;
     [SerializeField] private TextMeshProUGUI _rangeOfDiggingText;
     [SerializeField] private TextMeshProUGUI _rewardMultiplierText;
+    [SerializeField] private TextMeshProUGUI _regenerationText;
+    [SerializeField] private TextMeshProUGUI _criticalChanceText;
+    [SerializeField] private TextMeshProUGUI _criticalDamageText;
 
     [Header("Шаблоны улучшений для расчета бонусов")]
     [SerializeField] private UpgradeData _damageUpgrade;
@@ -29,9 +32,18 @@ public class ShopPickaxeStatisticsPanel : MonoBehaviour
 
         _pickaxeIcon.sprite = pickaxeData.icon;
 
-        _damageText.text = $"Damage: {finalDamage}\n(Lvl {damageLvl})";
-        _durabilityText.text = $"Durability: {finalDurability}\n(Lvl {durabilityLvl})";
+        _damageText.text = $"Damage: {finalDamage} <size=75%>(Lvl {damageLvl})</size>";
+        _durabilityText.text = $"Durability: {finalDurability} <size=75%>(Lvl {durabilityLvl})</size>";
         _rangeOfDiggingText.text = $"Range of digging: {pickaxeData.RangeOfDigging}";
-        _rewardMultiplierText.text = $"Reward multiplier: {finalMultiplier:0.##}\n(Lvl {multiplierLvl})";
+        _rewardMultiplierText.text = $"Reward multiplier: {finalMultiplier:0.##} <size=75%>(Lvl {multiplierLvl})</size>";
+
+        var upgrades = UpgradesManager.Instance;
+        int pickaxeId = pickaxeData.ID;
+        if (_regenerationText != null)
+            _regenerationText.text = $"Regen: +{upgrades.GetRegenerationBonus(pickaxeId)} / s <size=75%>(Lvl {upgrades.GetUpgradeLevel(pickaxeId, UpgradeIds.Regeneration)})</size>";
+        if (_criticalChanceText != null)
+            _criticalChanceText.text = $"Crit chance: {upgrades.GetCriticalChance(pickaxeId):P0} <size=75%>(Lvl {upgrades.GetUpgradeLevel(pickaxeId, UpgradeIds.CriticalChance)})</size>";
+        if (_criticalDamageText != null)
+            _criticalDamageText.text = $"Crit damage: x{upgrades.GetCriticalDamageMultiplier(pickaxeId):0.##} <size=75%>(Lvl {upgrades.GetUpgradeLevel(pickaxeId, UpgradeIds.CriticalDamage)})</size>";
     }
 }

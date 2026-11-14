@@ -3061,7 +3061,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -389, y: 22}
-  m_SizeDelta: {x: 650, y: 108}
+  m_SizeDelta: {x: 420, y: 108}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &2026123412
 MonoBehaviour:
@@ -4085,6 +4085,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnchantmentTableUI
   _player: {fileID: 1767369205}
   _pickaxes: {fileID: 11400000, guid: be2b8017e64314b4f93fd46d555558a4, type: 2}
+  _statisticsPanel: {fileID: 1968871334}
   _status: {fileID: 2026123412}
   _price: {fileID: 2026123457}
   _rollButton: {fileID: 2026123454}

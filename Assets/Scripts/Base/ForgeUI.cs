@@ -56,7 +56,7 @@ public class ForgeUI : MonoBehaviour
 
             item.Name.text = upgrade.upgradeID switch
             {
-                UpgradeIds.Regeneration => $"{upgrade.upgradeName}\n+{upgrade.valuePerLevel:0.##} durability / {GameManager.RegenerationInterval:0.#}s per level",
+                UpgradeIds.Regeneration => $"{upgrade.upgradeName}\n+{upgrade.valuePerLevel:0.##} durability / sec per level",
                 UpgradeIds.CriticalDamage => $"{upgrade.upgradeName}\nx{UpgradesManager.Instance.GetCriticalDamageMultiplier(equippedData.ID):0.##} (+{upgrade.valuePerLevel:0.##}x/lvl)",
                 UpgradeIds.CriticalChance => $"{upgrade.upgradeName}\n{UpgradesManager.Instance.GetCriticalChance(equippedData.ID):P0} (+{upgrade.valuePerLevel:P0}/lvl)",
                 _ => upgrade.upgradeName

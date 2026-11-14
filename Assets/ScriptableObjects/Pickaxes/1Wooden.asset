@@ -20,3 +20,4 @@ MonoBehaviour:
   RewardMultiplier: 1
   Price: 0
   icon: {fileID: 21300000, guid: 56ddb5bd981a42869ae9eb4f491a3e30, type: 3}
+  EnchantmentOutline: {fileID: 21300000, guid: ff9f0bd024bd4987a9a02fdc5d538691, type: 3}

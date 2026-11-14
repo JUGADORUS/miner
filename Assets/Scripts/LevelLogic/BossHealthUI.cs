@@ -7,11 +7,16 @@ public class BossHealthUI : MonoBehaviour
     [SerializeField] private ChunkGenerator _mine;
     [SerializeField] private TMP_FontAsset _font;
 
+    private const float HitDuration = 0.28f;
+    private const float HitAngle = 3f;
+
     private RectTransform _panel;
     private RectTransform _fill;
     private TextMeshProUGUI _healthLabel;
     private int _displayedHealth = -1;
     private int _displayedMaximum;
+    private Block _displayedBoss;
+    private float _hitElapsed = HitDuration;
 
     private void LateUpdate()
     {
@@ -19,6 +24,7 @@ public class BossHealthUI : MonoBehaviour
         if (boss == null)
         {
             if (_panel != null) _panel.gameObject.SetActive(false);
+            _displayedBoss = null;
             return;
         }
 
@@ -27,6 +33,18 @@ public class BossHealthUI : MonoBehaviour
 
         int health = boss.Health;
         int maximum = boss.MaximumHealth;
+        if (boss != _displayedBoss)
+        {
+            _displayedBoss = boss;
+            _hitElapsed = HitDuration;
+            _panel.localRotation = Quaternion.identity;
+        }
+        else if (health < _displayedHealth)
+        {
+            _hitElapsed = 0f;
+        }
+
+        UpdateHitFeedback();
         if (health == _displayedHealth && maximum == _displayedMaximum) return;
 
         _displayedHealth = health;
@@ -35,30 +53,41 @@ public class BossHealthUI : MonoBehaviour
         _healthLabel.SetText($"{health} / {maximum} HP");
     }
 
+    private void UpdateHitFeedback()
+    {
+        if (_hitElapsed >= HitDuration) return;
+
+        _hitElapsed = Mathf.Min(_hitElapsed + Time.unscaledDeltaTime, HitDuration);
+        float progress = _hitElapsed / HitDuration;
+        float fade = 1f - progress;
+        float angle = Mathf.Sin(progress * Mathf.PI * 4f) * fade * HitAngle;
+        _panel.localRotation = Quaternion.Euler(0f, 0f, angle);
+    }
+
     private void CreatePanel()
     {
         _panel = AddImage(transform, "Boss Health", new Color32(27, 16, 20, 245));
         _panel.anchorMin = _panel.anchorMax = new Vector2(0.5f, 0f);
         _panel.pivot = new Vector2(0.5f, 0f);
-        _panel.anchoredPosition = new Vector2(0f, 20f);
-        _panel.sizeDelta = new Vector2(276f, 48f);
+        _panel.anchoredPosition = new Vector2(0f, 12f);
+        _panel.sizeDelta = new Vector2(360f, 60f);
 
         var title = AddLabel("Boss Label", TextAlignmentOptions.MidlineLeft);
         title.text = "BOSS";
         title.color = new Color32(255, 174, 147, 255);
         SetRect(title.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f),
-            new Vector2(10f, -28f), new Vector2(70f, -4f));
+            new Vector2(14f, -34f), new Vector2(90f, -6f));
 
         _healthLabel = AddLabel("Boss HP", TextAlignmentOptions.MidlineRight);
         _healthLabel.enableAutoSizing = true;
         _healthLabel.fontSizeMin = 10f;
-        _healthLabel.fontSizeMax = 16f;
+        _healthLabel.fontSizeMax = 20f;
         SetRect(_healthLabel.rectTransform, new Vector2(0f, 1f), Vector2.one,
-            new Vector2(70f, -28f), new Vector2(-10f, -4f));
+            new Vector2(90f, -34f), new Vector2(-14f, -6f));
 
         RectTransform track = AddImage(_panel, "Health Track", new Color32(70, 39, 48, 255));
         SetRect(track, Vector2.zero, new Vector2(1f, 0f),
-            new Vector2(10f, 8f), new Vector2(-10f, 19f));
+            new Vector2(14f, 9f), new Vector2(-14f, 24f));
         _fill = AddImage(track, "Health Fill", new Color32(227, 66, 78, 255));
         SetRect(_fill, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
     }
@@ -70,7 +99,7 @@ public class BossHealthUI : MonoBehaviour
         label.transform.SetParent(_panel, false);
         var text = label.GetComponent<TextMeshProUGUI>();
         text.font = _font;
-        text.fontSize = 16f;
+        text.fontSize = 20f;
         text.alignment = alignment;
         text.textWrappingMode = TextWrappingModes.NoWrap;
         text.raycastTarget = false;
