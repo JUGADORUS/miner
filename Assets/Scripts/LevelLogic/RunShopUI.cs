@@ -38,6 +38,7 @@ public class RunShopUI : MonoBehaviour
     private void OnEnable()
     {
         _run.RunShopChanged += Refresh;
+        MinerLocalization.Changed += Refresh;
         GameEvents.OnDurabilityChanged += RefreshDurability;
         Refresh();
     }
@@ -45,6 +46,7 @@ public class RunShopUI : MonoBehaviour
     private void OnDisable()
     {
         _run.RunShopChanged -= Refresh;
+        MinerLocalization.Changed -= Refresh;
         GameEvents.OnDurabilityChanged -= RefreshDurability;
     }
 
@@ -62,28 +64,29 @@ public class RunShopUI : MonoBehaviour
 
     private void Refresh()
     {
-        _balance.text = $"Run shop   {_run.RunCredits} RP";
+        _balance.text = $"{MinerLocalization.Text("Run shop")}   {MinerLocalization.Format("{0} RP", _run.RunCredits)}";
+        _toggle.gameObject.SetActive(_run.HasStarted);
         _toggle.interactable = _run.CanBuyRunUpgrades;
         if (!_toggle.interactable) _panel.SetActive(false);
         if (!_panel.activeSelf) return;
 
-        SetOffer(_damage, _damageLabel, Upgrade.Damage, "+1 Damage");
-        SetOffer(_capacity, _capacityLabel, Upgrade.Capacity, "+8 Max durability");
+        SetOffer(_damage, _damageLabel, Upgrade.Damage, MinerLocalization.Text("+1 Damage"));
+        SetOffer(_capacity, _capacityLabel, Upgrade.Capacity, MinerLocalization.Text("+8 Max durability"));
         RefreshRepairOffer();
         SetOffer(_regeneration.Button, _regeneration.Label, Upgrade.Regeneration,
-            $"Regen +{GameManager.RunRegenerationBonus}/s");
+            MinerLocalization.Format("Regen +{0}/s", GameManager.RunRegenerationBonus));
         SetOffer(_criticalChance.Button, _criticalChance.Label, Upgrade.CriticalChance,
-            $"Crit chance +{GameManager.RunCriticalChanceBonus:P0}");
+            $"{MinerLocalization.Text("Crit chance")} +{GameManager.RunCriticalChanceBonus:P0}");
         SetOffer(_criticalDamage.Button, _criticalDamage.Label, Upgrade.CriticalDamage,
-            $"Crit damage +{GameManager.RunCriticalDamageBonus:0.##}x");
+            $"{MinerLocalization.Text("Crit damage")} +{GameManager.RunCriticalDamageBonus:0.##}x");
     }
 
     private void RefreshRepairOffer()
     {
         _repair.interactable = _run.CanBuyRunUpgrade(Upgrade.Repair);
         string label = _run.HasFullDurability
-            ? "Full durability"
-            : $"Repair +12   {_run.GetRunUpgradeCost(Upgrade.Repair)} RP";
+            ? MinerLocalization.Text("Full durability")
+            : $"{MinerLocalization.Text("Repair +12")}   {MinerLocalization.Format("{0} RP", _run.GetRunUpgradeCost(Upgrade.Repair))}";
         if (_repairLabel.text != label) _repairLabel.text = label;
     }
 
@@ -109,6 +112,6 @@ public class RunShopUI : MonoBehaviour
     private void SetOffer(Button button, TextMeshProUGUI label, Upgrade upgrade, string description)
     {
         button.interactable = _run.CanBuyRunUpgrade(upgrade);
-        label.text = $"{description}   {_run.GetRunUpgradeCost(upgrade)} RP";
+        label.text = $"{description}   {MinerLocalization.Format("{0} RP", _run.GetRunUpgradeCost(upgrade))}";
     }
 }

@@ -3,13 +3,14 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
+    internal const int ReviveDurabilityPercent = 35;
     private const float WorkbenchRepairFraction = 0.2f;
     private const float DynamiteFuse = 3f;
     private const int DynamiteRadius = 5;
     private const int DroppedDynamiteRadius = 3;
     private const int LightningLength = 10;
-    private const float LuckDuration = 10f;
-    private const float LuckBonus = 10f;
+    private const float LuckDuration = 7f;
+    private const float LuckRewardMultiplier = 2f;
     private const int CriticalDiggingRangeBonus = 2;
     internal const int DashHitsRequired = 3;
     private const float DashSpeed = 12f;
@@ -35,13 +36,14 @@ public class GameManager : MonoBehaviour
     private int _armedCharges;
     private bool _pickaxeBroken;
     private bool _sessionEnded;
+    private bool _reviveUsed;
+    private int _paidReward;
+    private float _sessionEndTime;
     private int _regenerationAmount;
     private float _regenerationProgress;
     private float _baseCriticalChance;
     private float _criticalChance;
     private float _criticalDamageMultiplier = DefaultCriticalDamageMultiplier;
-    private Block _lastBossHit;
-    private double _lastBossHitTime;
     private Rigidbody2D _pickaxeBody;
     private double _lastDashChargeTime = double.NegativeInfinity;
 
@@ -51,8 +53,11 @@ public class GameManager : MonoBehaviour
     public int RunCredits { get; private set; }
     internal bool HasFullDurability => _pickaxe.Durability >= _pickaxe.MaxDurability;
     internal int DashChargeHits { get; private set; } = DashHitsRequired;
-    public bool CanBuyRunUpgrades => !_pickaxeBroken && _pickaxe.Durability > 0;
+    internal bool CanRevive => _sessionEnded && !_reviveUsed && _pickaxe.MaxDurability > 0;
+    internal bool HasStarted { get; private set; }
+    public bool CanBuyRunUpgrades => HasStarted && !_pickaxeBroken && _pickaxe.Durability > 0;
     public event System.Action RunShopChanged;
+    internal event System.Action RunStarted;
     internal event System.Action<Vector2> Dashed;
     internal event System.Action<Vector2, float> DynamiteExploded;
 
@@ -113,6 +118,7 @@ public class GameManager : MonoBehaviour
             case RunUpgrade.Repair:
                 _runRepairs++;
                 _pickaxe.Durability = Mathf.Min(_pickaxe.MaxDurability, _pickaxe.Durability + 12);
+                GameEvents.OnGameplayCue?.Invoke(GameplayCue.Repair);
                 break;
             case RunUpgrade.Regeneration:
                 _runRegenerationLevel++;
@@ -140,6 +146,7 @@ public class GameManager : MonoBehaviour
 
         _foreground = GetComponent<ChunkGenerator>();
         _pickaxeBody = _pickaxe.GetComponent<Rigidbody2D>();
+        _pickaxeBody.simulated = false;
         GameEvents.OnHitBlockWithDirectionPosition += HandleHitBlock;
         GameEvents.OnBlockDestroyed += HandleBlockDestroyed;
         GameEvents.OnPickaxeBroken += HandlePickaxeBroken;
@@ -176,6 +183,17 @@ public class GameManager : MonoBehaviour
             PickaxeEnchantments.GetLevel(id, EnchantmentKind.Luck));
     }
 
+    internal bool TryStartRun()
+    {
+        if (HasStarted || Time.timeScale <= 0f || YG.YG2.isPauseGame) return false;
+
+        HasStarted = true;
+        _pickaxeBody.simulated = true;
+        RunStarted?.Invoke();
+        RunShopChanged?.Invoke();
+        return true;
+    }
+
     private void Update()
     {
         UpdateRegeneration(Time.deltaTime);
@@ -203,23 +221,21 @@ public class GameManager : MonoBehaviour
 
     private void HandleHitBlock(Block block, Vector2 contactPoint, Vector2 normal)
     {
-        if (block == null || block.IsDestroyed || _pickaxe.Durability <= 0) return;
+        if (!CanBuyRunUpgrades || block == null || block.IsDestroyed) return;
         double hitTime = Time.fixedTimeAsDouble;
-        if (block.IsBossWall)
-        {
-            // The head and handle can contact the same wall in one physics step.
-            if (_lastBossHit == block && _lastBossHitTime == hitTime) return;
-
-            _lastBossHit = block;
-            _lastBossHitTime = hitTime;
-        }
+        // The head and handle can contact the same block in one physics step.
+        if ((block.IsBossWall || block.IsIndestructible) && !block.TryRegisterHit(hitTime)) return;
 
         Vector2 hitCenter = block.transform.position;
-        _pickaxe.Durability = Mathf.Max(0, _pickaxe.Durability - block.GetHitWear());
+        int durabilityBeforeHit = _pickaxe.Durability;
+        _pickaxe.Durability = Mathf.Max(0, _pickaxe.Durability - block.GetHitWear(_pickaxe.MaxDurability));
         bool lightningTriggered = RollEnchantment(_lightningChance);
         bool dynamiteTriggered = RollEnchantment(_dynamiteChance);
         if (RollEnchantment(_luckChance))
+        {
             _luckUntil = Time.time + LuckDuration;
+            GameEvents.OnGameplayCue?.Invoke(GameplayCue.Luck);
+        }
 
         DamageBlocks(block, contactPoint, normal);
         if (dynamiteTriggered)
@@ -231,10 +247,13 @@ public class GameManager : MonoBehaviour
 
         if (_pickaxe.Durability == 0)
         {
+            GameEvents.OnGameplayCue?.Invoke(GameplayCue.Break);
             GameEvents.OnPickaxeBroken?.Invoke();
         }
         else
         {
+            if (_pickaxe.Durability < durabilityBeforeHit)
+                GameEvents.OnGameplayCue?.Invoke(GameplayCue.Wear);
             ChargeDash(hitTime);
         }
     }
@@ -262,6 +281,7 @@ public class GameManager : MonoBehaviour
         direction.Normalize();
         _pickaxeBody.linearVelocity = direction * DashSpeed;
         Dashed?.Invoke(direction);
+        GameEvents.OnGameplayCue?.Invoke(GameplayCue.Dash);
         return true;
     }
 
@@ -270,6 +290,7 @@ public class GameManager : MonoBehaviour
 
     private void StrikeLightning(Vector2Int cell)
     {
+        GameEvents.OnGameplayCue?.Invoke(GameplayCue.Lightning);
         float angle = Random.Range(-180f, 0f) * Mathf.Deg2Rad;
         var direction = new Vector2(Mathf.Cos(angle), Mathf.Min(0f, Mathf.Sin(angle)));
         Vector2 travel = direction * LightningLength;
@@ -325,7 +346,11 @@ public class GameManager : MonoBehaviour
         }
 
         hitBlock.TakeDamage(damage);
-        if (critical) GameEvents.OnCriticalHit?.Invoke(contactPoint, damage);
+        if (critical)
+        {
+            GameEvents.OnCriticalHit?.Invoke(contactPoint, damage);
+            GameEvents.OnGameplayCue?.Invoke(GameplayCue.Critical);
+        }
 
         if (range <= 1 || _foreground == null) return;
 
@@ -374,12 +399,15 @@ public class GameManager : MonoBehaviour
         {
             if (_pickaxeBroken) return;
             int repairAmount = Mathf.CeilToInt(_pickaxe.MaxDurability * WorkbenchRepairFraction);
-            _pickaxe.Durability = Mathf.Min(_pickaxe.MaxDurability, _pickaxe.Durability + repairAmount);
+            int previous = _pickaxe.Durability;
+            _pickaxe.Durability = Mathf.Min(_pickaxe.MaxDurability, previous + repairAmount);
+            if (_pickaxe.Durability > previous)
+                GameEvents.OnGameplayCue?.Invoke(GameplayCue.Repair);
             return;
         }
 
         int baseReward = block.DetermineReward();
-        float multiplier = _pickaxe.RewardMultiplyer + (LuckTimeLeft > 0f ? LuckBonus : 0f);
+        float multiplier = _pickaxe.RewardMultiplyer * (LuckTimeLeft > 0f ? LuckRewardMultiplier : 1f);
         int reward = Mathf.RoundToInt(baseReward * multiplier);
 
         RewardPerSession += reward;
@@ -420,6 +448,7 @@ public class GameManager : MonoBehaviour
         }
 
         _armedCharges++;
+        GameEvents.OnGameplayCue?.Invoke(GameplayCue.Fuse);
         StartCoroutine(Detonate(charge.transform, sprite, radius));
     }
 
@@ -442,6 +471,7 @@ public class GameManager : MonoBehaviour
         charge.gameObject.SetActive(false);
         Destroy(charge.gameObject);
         DynamiteExploded?.Invoke(position, radius * _foreground.blockSize);
+        GameEvents.OnGameplayCue?.Invoke(GameplayCue.Blast);
         int durabilityBeforeBlast = _pickaxe.Durability;
         _foreground.Blast(_foreground.WorldToBlock(position), radius);
         if (_pickaxe.Durability != durabilityBeforeBlast)
@@ -457,12 +487,41 @@ public class GameManager : MonoBehaviour
         TryEndSession();
     }
 
+    internal bool TryRevive()
+    {
+        if (!CanRevive) return false;
+
+        _reviveUsed = true;
+        _sessionEnded = false;
+        _pickaxeBroken = false;
+        _pickaxe.Durability = Mathf.CeilToInt(_pickaxe.MaxDurability * (ReviveDurabilityPercent / 100f));
+        _pickaxeBody.bodyType = RigidbodyType2D.Dynamic;
+        if (_luckUntil > _sessionEndTime)
+            _luckUntil += Time.time - _sessionEndTime;
+
+        GameEvents.OnDurabilityChanged?.Invoke(_pickaxe.Durability, _pickaxe.MaxDurability);
+        RunShopChanged?.Invoke();
+        GameEvents.OnGameplayCue?.Invoke(GameplayCue.Repair);
+        GameEvents.OnSessionRevived?.Invoke();
+        return true;
+    }
+
     private void TryEndSession()
     {
         if (_sessionEnded || !_pickaxeBroken || _armedCharges != 0) return;
 
         _sessionEnded = true;
-        if (RewardPerSession > 0) _player.GetReward(RewardPerSession);
+        _sessionEndTime = Time.time;
+        BankRunReward();
         GameEvents.OnSessionEnded?.Invoke(RewardPerSession);
+    }
+
+    internal void BankRunReward()
+    {
+        int unpaidReward = RewardPerSession - _paidReward;
+        if (unpaidReward <= 0) return;
+
+        _paidReward = RewardPerSession;
+        _player.GetReward(unpaidReward);
     }
 }

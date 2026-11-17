@@ -45,7 +45,7 @@ public class MiningFeedback : MonoBehaviour
     }
 
     private void ShowCritical(Vector2 position, int damage) =>
-        ShowPopup($"CRIT {damage}", new Color32(255, 196, 97, 255), position, false);
+        ShowPopup(MinerLocalization.Format("CRIT {0}", damage), new Color32(255, 196, 97, 255), position, false);
 
     private void ShowRegeneration(int amount)
     {

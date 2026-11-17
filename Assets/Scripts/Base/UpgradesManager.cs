@@ -49,7 +49,7 @@ public class UpgradesManager : MonoBehaviour
 
     public int GetUpgradeLevel(int pickaxeId, string upgradeId)
     {
-        int savedLevel = PlayerPrefs.GetInt(GetKey(pickaxeId, upgradeId), 0);
+        int savedLevel = MinerProgress.GetInt(GetKey(pickaxeId, upgradeId), 0);
         return Mathf.Clamp(savedLevel, 0, GetMaxLevel(upgradeId));
     }
 
@@ -58,8 +58,8 @@ public class UpgradesManager : MonoBehaviour
         int currentLevel = GetUpgradeLevel(pickaxeId, upgradeId);
         if (currentLevel >= GetMaxLevel(upgradeId)) return;
 
-        PlayerPrefs.SetInt(GetKey(pickaxeId, upgradeId), currentLevel + 1);
-        PlayerPrefs.Save();
+        MinerProgress.SetInt(GetKey(pickaxeId, upgradeId), currentLevel + 1);
+        MinerProgress.Save();
     }
 
     private int GetMaxLevel(string upgradeId)

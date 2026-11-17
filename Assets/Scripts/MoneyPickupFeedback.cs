@@ -84,13 +84,18 @@ public class MoneyPickupFeedback : MonoBehaviour
 
     private void LaunchCoin(Vector2 worldPosition, int reward)
     {
-        if (_flyingCoinSprite == null) return;
+        if (_flyingCoinSprite == null)
+        {
+            GameEvents.OnGameplayCue?.Invoke(GameplayCue.Coin);
+            return;
+        }
 
         Vector3 screenPoint = _worldCamera.WorldToScreenPoint(worldPosition);
         Camera uiCamera = _canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : _canvas.worldCamera;
         if (screenPoint.z <= 0f ||
             !RectTransformUtility.ScreenPointToLocalPointInRectangle(_flightParent, screenPoint, uiCamera, out Vector2 origin))
         {
+            GameEvents.OnGameplayCue?.Invoke(GameplayCue.Coin);
             return;
         }
 
@@ -171,6 +176,7 @@ public class MoneyPickupFeedback : MonoBehaviour
             _coins.RemoveAt(i);
             ReleaseCoin(coin);
             _pulseTimeLeft = PulseDuration;
+            GameEvents.OnGameplayCue?.Invoke(GameplayCue.Coin);
         }
     }
 

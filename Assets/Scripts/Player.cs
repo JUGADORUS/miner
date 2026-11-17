@@ -4,15 +4,24 @@ public class Player : MonoBehaviour
 {
     public int Money { get; private set; }
 
-    private const string MoneyKey = "PlayerMoney";
+    private const string MoneyKey = MinerProgress.MoneyKey;
 
     private void Awake()
     {
-        Money = PlayerPrefs.GetInt(MoneyKey, 0);
+        Money = MinerProgress.GetInt(MoneyKey, 0);
+        YG.YG2.onGetSDKData += RefreshCloudBalance;
     }
 
     private void Start()
     {
+        GameEvents.OnMoneyChanged?.Invoke(Money);
+    }
+
+    private void OnDestroy() => YG.YG2.onGetSDKData -= RefreshCloudBalance;
+
+    private void RefreshCloudBalance()
+    {
+        Money = MinerProgress.GetInt(MoneyKey);
         GameEvents.OnMoneyChanged?.Invoke(Money);
     }
 
@@ -30,8 +39,8 @@ public class Player : MonoBehaviour
     private void SetMoney(int value)
     {
         Money = value;
-        PlayerPrefs.SetInt(MoneyKey, Money);
-        PlayerPrefs.Save();
+        MinerProgress.SetInt(MoneyKey, Money);
+        MinerProgress.Save();
         GameEvents.OnMoneyChanged?.Invoke(Money);
     }
 }

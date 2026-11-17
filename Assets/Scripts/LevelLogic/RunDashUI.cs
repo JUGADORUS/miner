@@ -18,6 +18,20 @@ public class RunDashUI : MonoBehaviour
     private TextMeshProUGUI _label;
     private int _shownCharge = -1;
 
+    private void OnEnable()
+    {
+        MinerLocalization.Changed += RefreshLanguage;
+        RefreshLanguage();
+    }
+
+    private void OnDisable() => MinerLocalization.Changed -= RefreshLanguage;
+
+    private void RefreshLanguage()
+    {
+        _shownCharge = -1;
+        RefreshIndicator();
+    }
+
     private void Awake()
     {
         var frame = AddImage(transform, "Dash Indicator");
@@ -53,7 +67,7 @@ public class RunDashUI : MonoBehaviour
     private void LateUpdate()
     {
         // Evaluate after pause and UI input have had a chance to handle this frame.
-        if (Time.timeScale > 0f && TryGetPress(out Vector2 screenPoint) && !PressedControl(screenPoint))
+        if (_run.HasStarted && Time.timeScale > 0f && TryGetPress(out Vector2 screenPoint) && !PressedControl(screenPoint))
         {
             var plane = new Plane(Vector3.forward, Vector3.zero);
             Ray ray = _worldCamera.ScreenPointToRay(screenPoint);
@@ -72,7 +86,7 @@ public class RunDashUI : MonoBehaviour
         _shownCharge = charge;
         bool ready = charge == _segments.Length;
         var chargedColor = new Color32(255, 188, 100, 255);
-        _label.text = ready ? "Dash ready" : $"Dash {charge}/{_segments.Length}";
+        _label.text = ready ? MinerLocalization.Text("Dash ready") : MinerLocalization.Format("Dash {0}/{1}", charge, _segments.Length);
         _label.color = ready ? chargedColor : new Color32(235, 211, 190, 255);
         for (int index = 0; index < _segments.Length; index++)
             _segments[index].color = index < charge ? chargedColor : new Color32(77, 55, 66, 255);

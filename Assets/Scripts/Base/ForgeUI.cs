@@ -17,12 +17,11 @@ public class ForgeUI : MonoBehaviour
     [Header("Список доступных улучшений")]
     [SerializeField] private List<UpgradeData> _availableUpgrades;
 
-    private const string EquippedKey = "EquippedPickaxe";
-
     private void OnEnable()
     {
         UpdateMoneyText(_player.Money);
         GameEvents.OnMoneyChanged += UpdateMoneyText;
+        MinerLocalization.Changed += RefreshForgeUI;
 
         if (UpgradesManager.Instance != null)
         {
@@ -33,6 +32,7 @@ public class ForgeUI : MonoBehaviour
     private void OnDisable()
     {
         GameEvents.OnMoneyChanged -= UpdateMoneyText;
+        MinerLocalization.Changed -= RefreshForgeUI;
     }
 
     private void RefreshForgeUI()
@@ -42,7 +42,7 @@ public class ForgeUI : MonoBehaviour
             Destroy(child.gameObject);
         }
 
-        int equippedPickaxeId = PlayerPrefs.GetInt(EquippedKey, 0);
+        int equippedPickaxeId = ShopUI.GetEquippedId();
 
         PickaxeData equippedData = _pickaxeDatabase.GetById(equippedPickaxeId);
         if (equippedData == null) return;
@@ -54,12 +54,13 @@ public class ForgeUI : MonoBehaviour
             GameObject obj = Instantiate(_itemPrefab, _whereToSpawn.transform);
             ItemInShop item = obj.GetComponent<ItemInShop>();
 
+            string name = MinerLocalization.Text(upgrade.upgradeName);
             item.Name.text = upgrade.upgradeID switch
             {
-                UpgradeIds.Regeneration => $"{upgrade.upgradeName}\n+{upgrade.valuePerLevel:0.##} durability / sec per level",
-                UpgradeIds.CriticalDamage => $"{upgrade.upgradeName}\nx{UpgradesManager.Instance.GetCriticalDamageMultiplier(equippedData.ID):0.##} (+{upgrade.valuePerLevel:0.##}x/lvl)",
-                UpgradeIds.CriticalChance => $"{upgrade.upgradeName}\n{UpgradesManager.Instance.GetCriticalChance(equippedData.ID):P0} (+{upgrade.valuePerLevel:P0}/lvl)",
-                _ => upgrade.upgradeName
+                UpgradeIds.Regeneration => name + "\n" + MinerLocalization.Format("+{0:0.##} durability / sec per level", upgrade.valuePerLevel),
+                UpgradeIds.CriticalDamage => $"{name}\nx{UpgradesManager.Instance.GetCriticalDamageMultiplier(equippedData.ID):0.##} ({MinerLocalization.Format("+{0:0.##}x/lvl", upgrade.valuePerLevel)})",
+                UpgradeIds.CriticalChance => $"{name}\n{UpgradesManager.Instance.GetCriticalChance(equippedData.ID):P0} ({MinerLocalization.Format("+{0:P0}/lvl", upgrade.valuePerLevel)})",
+                _ => name
             };
 
             UpdateUpgradeButtonVisual(item, upgrade, equippedData);
@@ -77,7 +78,7 @@ public class ForgeUI : MonoBehaviour
 
         if (currentLvl >= upgrade.maxLevel)
         {
-            SetButton(item, "#DF1428", "MAX", 40f, false);
+            SetButton(item, "#DF1428", MinerLocalization.Text("MAX"), 40f, false);
             return;
         }
 
@@ -85,11 +86,11 @@ public class ForgeUI : MonoBehaviour
 
         if (_player.CanSpend(cost))
         {
-            SetButton(item, "#29BB3C", $"Lvl {currentLvl}\n{cost}$", 35f, true);
+            SetButton(item, "#29BB3C", $"{MinerLocalization.Format("Lvl {0}", currentLvl)}\n{cost}$", 35f, true);
         }
         else
         {
-            SetButton(item, "#DF1428", $"Lvl {currentLvl}\n{cost}$", 35f, false);
+            SetButton(item, "#DF1428", $"{MinerLocalization.Format("Lvl {0}", currentLvl)}\n{cost}$", 35f, false);
         }
     }
 

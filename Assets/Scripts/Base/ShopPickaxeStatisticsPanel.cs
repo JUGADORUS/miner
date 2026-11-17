@@ -17,8 +17,21 @@ public class ShopPickaxeStatisticsPanel : MonoBehaviour
     [SerializeField] private UpgradeData _damageUpgrade;
     [SerializeField] private UpgradeData _durabilityUpgrade;
 
+    private PickaxeData _shownPickaxe;
+
+    private void OnEnable()
+    {
+        MinerLocalization.Changed += RefreshLanguage;
+        RefreshLanguage();
+    }
+
+    private void OnDisable() => MinerLocalization.Changed -= RefreshLanguage;
+
+    private void RefreshLanguage() => UpdateInfo(_shownPickaxe);
+
     public void UpdateInfo(PickaxeData pickaxeData)
     {
+        _shownPickaxe = pickaxeData;
         if (pickaxeData == null) return;
         if (UpgradesManager.Instance == null) return;
 
@@ -31,19 +44,20 @@ public class ShopPickaxeStatisticsPanel : MonoBehaviour
         float finalMultiplier = pickaxeData.GetRewardMultiplier(UpgradesManager.Instance.GetMultiplierBonus(pickaxeData.ID));
 
         _pickaxeIcon.sprite = pickaxeData.icon;
+        _pickaxeIcon.color = pickaxeData.Tint;
 
-        _damageText.text = $"Damage: {finalDamage} <size=75%>(Lvl {damageLvl})</size>";
-        _durabilityText.text = $"Durability: {finalDurability} <size=75%>(Lvl {durabilityLvl})</size>";
-        _rangeOfDiggingText.text = $"Range of digging: {pickaxeData.RangeOfDigging}";
-        _rewardMultiplierText.text = $"Reward multiplier: {finalMultiplier:0.##} <size=75%>(Lvl {multiplierLvl})</size>";
+        _damageText.text = $"{MinerLocalization.Text("Damage")}: {finalDamage} <size=75%>({MinerLocalization.Format("Lvl {0}", damageLvl)})</size>";
+        _durabilityText.text = $"{MinerLocalization.Text("Durability")}: {finalDurability} <size=75%>({MinerLocalization.Format("Lvl {0}", durabilityLvl)})</size>";
+        _rangeOfDiggingText.text = $"{MinerLocalization.Text("Range of digging")}: {pickaxeData.RangeOfDigging}";
+        _rewardMultiplierText.text = $"{MinerLocalization.Text("Reward multiplier")}: {finalMultiplier:0.##} <size=75%>({MinerLocalization.Format("Lvl {0}", multiplierLvl)})</size>";
 
         var upgrades = UpgradesManager.Instance;
         int pickaxeId = pickaxeData.ID;
         if (_regenerationText != null)
-            _regenerationText.text = $"Regen: +{upgrades.GetRegenerationBonus(pickaxeId)} / s <size=75%>(Lvl {upgrades.GetUpgradeLevel(pickaxeId, UpgradeIds.Regeneration)})</size>";
+            _regenerationText.text = $"{MinerLocalization.Text("Regen")}: +{MinerLocalization.Format("{0} / s", upgrades.GetRegenerationBonus(pickaxeId))} <size=75%>({MinerLocalization.Format("Lvl {0}", upgrades.GetUpgradeLevel(pickaxeId, UpgradeIds.Regeneration))})</size>";
         if (_criticalChanceText != null)
-            _criticalChanceText.text = $"Crit chance: {upgrades.GetCriticalChance(pickaxeId):P0} <size=75%>(Lvl {upgrades.GetUpgradeLevel(pickaxeId, UpgradeIds.CriticalChance)})</size>";
+            _criticalChanceText.text = $"{MinerLocalization.Text("Crit chance")}: {upgrades.GetCriticalChance(pickaxeId):P0} <size=75%>({MinerLocalization.Format("Lvl {0}", upgrades.GetUpgradeLevel(pickaxeId, UpgradeIds.CriticalChance))})</size>";
         if (_criticalDamageText != null)
-            _criticalDamageText.text = $"Crit damage: x{upgrades.GetCriticalDamageMultiplier(pickaxeId):0.##} <size=75%>(Lvl {upgrades.GetUpgradeLevel(pickaxeId, UpgradeIds.CriticalDamage)})</size>";
+            _criticalDamageText.text = $"{MinerLocalization.Text("Crit damage")}: x{upgrades.GetCriticalDamageMultiplier(pickaxeId):0.##} <size=75%>({MinerLocalization.Format("Lvl {0}", upgrades.GetUpgradeLevel(pickaxeId, UpgradeIds.CriticalDamage))})</size>";
     }
 }

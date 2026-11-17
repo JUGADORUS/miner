@@ -1961,25 +1961,9 @@ PrefabInstance:
       value: 1.2
       objectReference: {fileID: 0}
     - target: {fileID: 4457139170309181358, guid: 48a2207f9dfbea042b934e5d0368dcd7, type: 3}
-      propertyPath: _clickSounds.Array.size
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4457139170309181358, guid: 48a2207f9dfbea042b934e5d0368dcd7, type: 3}
-      propertyPath: _hoverSounds.Array.size
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4457139170309181358, guid: 48a2207f9dfbea042b934e5d0368dcd7, type: 3}
       propertyPath: '_musicClips.Array.data[0]'
       value: 
       objectReference: {fileID: 0}
-    - target: {fileID: 4457139170309181358, guid: 48a2207f9dfbea042b934e5d0368dcd7, type: 3}
-      propertyPath: '_clickSounds.Array.data[0]'
-      value: 
-      objectReference: {fileID: 8300000, guid: fbb39de9e2d5fc746a03523915d85abc, type: 3}
-    - target: {fileID: 4457139170309181358, guid: 48a2207f9dfbea042b934e5d0368dcd7, type: 3}
-      propertyPath: '_hoverSounds.Array.data[0]'
-      value: 
-      objectReference: {fileID: 8300000, guid: 560500bc77674fb4cb24dc2a1c7f65af, type: 3}
     - target: {fileID: 8030085596433860045, guid: 48a2207f9dfbea042b934e5d0368dcd7, type: 3}
       propertyPath: m_Name
       value: AudioManager
@@ -2978,7 +2962,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: f2bf0034929b4ef4f96d81094a37b193, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 1fd8f78244c354619f591f506e6cd50a, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

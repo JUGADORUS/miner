@@ -931,22 +931,6 @@ PrefabInstance:
       propertyPath: _masterSlider
       value: 
       objectReference: {fileID: 801715262}
-    - target: {fileID: 4457139170309181358, guid: 48a2207f9dfbea042b934e5d0368dcd7, type: 3}
-      propertyPath: _clickSounds.Array.size
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4457139170309181358, guid: 48a2207f9dfbea042b934e5d0368dcd7, type: 3}
-      propertyPath: _hoverSounds.Array.size
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4457139170309181358, guid: 48a2207f9dfbea042b934e5d0368dcd7, type: 3}
-      propertyPath: '_clickSounds.Array.data[0]'
-      value: 
-      objectReference: {fileID: 8300000, guid: fbb39de9e2d5fc746a03523915d85abc, type: 3}
-    - target: {fileID: 4457139170309181358, guid: 48a2207f9dfbea042b934e5d0368dcd7, type: 3}
-      propertyPath: '_hoverSounds.Array.data[0]'
-      value: 
-      objectReference: {fileID: 8300000, guid: 560500bc77674fb4cb24dc2a1c7f65af, type: 3}
     - target: {fileID: 8030085596433860045, guid: 48a2207f9dfbea042b934e5d0368dcd7, type: 3}
       propertyPath: m_Name
       value: AudioManager

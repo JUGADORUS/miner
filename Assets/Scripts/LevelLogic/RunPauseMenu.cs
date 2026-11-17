@@ -22,8 +22,10 @@ public class RunPauseMenu : MonoBehaviour
     private Button _continueButton;
     private Button _cancelButton;
     private Button _pauseButton;
+    private TextMeshProUGUI _startPrompt;
+    private GameObject _startSurface;
+    private GameManager _run;
     private CanvasGroup _gameControls;
-    private string _destination;
     private bool _paused;
     private bool _ended;
     private float _previousTimeScale;
@@ -32,16 +34,42 @@ public class RunPauseMenu : MonoBehaviour
     {
         CreateMenu();
         GameEvents.OnSessionEnded += EndRun;
+        GameEvents.OnSessionRevived += ReopenRunControls;
+        MinerLocalization.Changed += RefreshWarning;
+    }
+
+    private void Start()
+    {
+        _run = GameManager.Instance;
+        _run.RunStarted += HideStartPrompt;
+        if (_run.HasStarted) HideStartPrompt();
+        else Select(_startSurface);
+    }
+
+    private void HideStartPrompt()
+    {
+        _startPrompt.gameObject.SetActive(false);
+        _startSurface.SetActive(false);
+        Select(null);
     }
 
     private void OnDestroy()
     {
         GameEvents.OnSessionEnded -= EndRun;
+        GameEvents.OnSessionRevived -= ReopenRunControls;
+        MinerLocalization.Changed -= RefreshWarning;
+        if (_run != null) _run.RunStarted -= HideStartPrompt;
         if (_paused) Time.timeScale = _previousTimeScale;
     }
 
     private void Update()
     {
+        if (_startPrompt.isActiveAndEnabled && !_paused)
+        {
+            float pulse = 0.5f + 0.5f * Mathf.Cos(Time.unscaledTime * Mathf.PI);
+            _startPrompt.rectTransform.localScale = Vector3.one * Mathf.Lerp(0.95f, 1.08f, pulse);
+        }
+
         if (_ended || Keyboard.current == null || !Keyboard.current.escapeKey.wasPressedThisFrame) return;
 
         if (_settingsMenu.activeSelf) CloseSettings();
@@ -67,16 +95,14 @@ public class RunPauseMenu : MonoBehaviour
         _settingsMenu.SetActive(false);
         _confirmation.SetActive(false);
         _overlay.SetActive(false);
-        _destination = null;
         _paused = false;
         Time.timeScale = _previousTimeScale;
         _gameControls.interactable = true;
-        Select(_ended ? null : _pauseButton.gameObject);
+        Select(_ended ? null : _run.HasStarted ? _pauseButton.gameObject : _startSurface);
     }
 
     private void ShowMenu()
     {
-        _destination = null;
         _confirmation.SetActive(false);
         _menu.SetActive(true);
         Select(_continueButton.gameObject);
@@ -95,23 +121,31 @@ public class RunPauseMenu : MonoBehaviour
         if (_paused) ShowMenu();
     }
 
-    private void ConfirmExit(string sceneName, string destinationLabel)
+    private void GoToBase()
     {
-        _destination = sceneName;
-        _warning.text = $"Go to {destinationLabel}?\nRun progress will not be saved.";
+        if (!_run.HasStarted)
+        {
+            LeaveRun();
+            return;
+        }
+
+        Pause();
+        RefreshWarning();
         _menu.SetActive(false);
         _confirmation.SetActive(true);
         Select(_cancelButton.gameObject);
     }
 
+    private void RefreshWarning()
+    {
+        _warning.text = MinerLocalization.Text("Go to base?\nYour earned coins will be saved.");
+    }
+
     private void LeaveRun()
     {
-        if (!_paused || _destination == null) return;
-
-        string sceneName = _destination;
+        _run.BankRunReward();
         Resume();
-        Time.timeScale = 1f;
-        SceneManager.LoadScene(sceneName);
+        SceneManager.LoadScene("BaseWorkshop");
     }
 
     private void EndRun(int reward)
@@ -121,9 +155,33 @@ public class RunPauseMenu : MonoBehaviour
         Resume();
     }
 
+    private void ReopenRunControls()
+    {
+        _ended = false;
+        _pauseButton.gameObject.SetActive(true);
+    }
+
     private void CreateMenu()
     {
         _gameControls = _gameUI.gameObject.AddComponent<CanvasGroup>();
+        var surface = AddImage(_gameUI, "Start Surface", Color.clear);
+        surface.rectTransform.SetAsFirstSibling();
+        surface.rectTransform.anchorMin = Vector2.zero;
+        surface.rectTransform.anchorMax = Vector2.one;
+        surface.rectTransform.offsetMin = surface.rectTransform.offsetMax = Vector2.zero;
+        var surfaceButton = surface.gameObject.AddComponent<Button>();
+        surfaceButton.navigation = new Navigation { mode = Navigation.Mode.None };
+        surfaceButton.transition = Selectable.Transition.None;
+        surfaceButton.onClick.AddListener(() => _run.TryStartRun());
+        _startSurface = surface.gameObject;
+        _startPrompt = AddLabel(_gameUI, "Tap to start", new Vector2(0f, -54f), new Vector2(440f, 54f), 30f);
+        _startPrompt.gameObject.name = "Start Prompt";
+        AddTapPointer(_startPrompt.rectTransform);
+
+        var baseButton = AddButton(_gameUI, "Go to base", Vector2.zero, new Vector2(184f, 52f), GoToBase);
+        var baseRect = (RectTransform)baseButton.transform;
+        baseRect.anchorMin = baseRect.anchorMax = baseRect.pivot = Vector2.zero;
+        baseRect.anchoredPosition = new Vector2(16f, 18f);
         _pauseButton = AddButton(_gameUI, "Pause", Vector2.zero, new Vector2(184f, 52f), Pause);
         var pauseRect = (RectTransform)_pauseButton.transform;
         pauseRect.anchorMin = pauseRect.anchorMax = Vector2.one;
@@ -144,8 +202,7 @@ public class RunPauseMenu : MonoBehaviour
         var size = new Vector2(198f, 50.4f);
         _continueButton = AddButton(menu, "Continue", new Vector2(0f, 49f), size, Resume);
         AddButton(menu, "Settings", new Vector2(0f, -3f), size, OpenSettings);
-        AddButton(menu, "Shop", new Vector2(0f, -55f), size, () => ConfirmExit("BaseWorkshop", "the shop"));
-        AddButton(menu, "Main Menu", new Vector2(0f, -107f), size, () => ConfirmExit("Menu", "the main menu"));
+        AddButton(menu, "Go to base", new Vector2(0f, -55f), size, GoToBase);
 
         var confirmation = AddPanel(overlayRect, "Leave Run Confirmation", new Vector2(374f, 321f));
         _confirmation = confirmation.gameObject;
@@ -157,6 +214,23 @@ public class RunPauseMenu : MonoBehaviour
 
         _confirmation.SetActive(false);
         _overlay.SetActive(false);
+    }
+
+    private static void AddTapPointer(RectTransform prompt)
+    {
+        var icon = new GameObject("Tap Pointer", typeof(RectTransform), typeof(RawImage));
+        icon.layer = prompt.gameObject.layer;
+        var rect = (RectTransform)icon.transform;
+        rect.SetParent(prompt, false);
+        rect.anchorMin = rect.anchorMax = new Vector2(0.5f, 0f);
+        rect.anchoredPosition = new Vector2(0f, -21f);
+        rect.sizeDelta = new Vector2(42f, 42f);
+
+        var image = icon.GetComponent<RawImage>();
+        image.raycastTarget = false;
+        image.texture = Resources.Load<Texture2D>("TapPointer");
+        if (image.texture != null)
+            image.texture.filterMode = FilterMode.Point;
     }
 
     private void Select(GameObject target)

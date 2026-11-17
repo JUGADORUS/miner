@@ -15,17 +15,17 @@ public static class PickaxeEnchantments
 
     public static int GetLevel(int pickaxeId, EnchantmentKind kind)
     {
-        int levels = PlayerPrefs.GetInt(LevelsKey(pickaxeId), -1);
+        int levels = MinerProgress.GetInt(LevelsKey(pickaxeId), -1);
         if (levels >= 0)
             return (levels >> ((int)kind * BitsPerLevel)) & MaxLevel;
 
         // Older saves store a single enchantment, or only a lightning level.
         var savedKind = (EnchantmentKind)Mathf.Clamp(
-            PlayerPrefs.GetInt($"EnchantmentKind_{pickaxeId}"), 0, KindCount - 1);
+            MinerProgress.GetInt($"EnchantmentKind_{pickaxeId}"), 0, KindCount - 1);
         if (kind != savedKind) return 0;
 
-        int lightningLevel = PlayerPrefs.GetInt($"LightningEnchantment_{pickaxeId}", 0);
-        return Mathf.Clamp(PlayerPrefs.GetInt($"EnchantmentLevel_{pickaxeId}", lightningLevel), 0, MaxLevel);
+        int lightningLevel = MinerProgress.GetInt($"LightningEnchantment_{pickaxeId}", 0);
+        return Mathf.Clamp(MinerProgress.GetInt($"EnchantmentLevel_{pickaxeId}", lightningLevel), 0, MaxLevel);
     }
 
     public static float GetHitChance(EnchantmentKind kind, int level) =>
@@ -62,8 +62,8 @@ public static class PickaxeEnchantments
             levels |= level << (kind * BitsPerLevel);
         }
 
-        PlayerPrefs.SetInt(LevelsKey(pickaxe.ID), levels);
-        PlayerPrefs.Save();
+        MinerProgress.SetInt(LevelsKey(pickaxe.ID), levels);
+        MinerProgress.Save();
         return true;
     }
 

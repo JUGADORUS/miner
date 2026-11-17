@@ -15,6 +15,7 @@ public class PickaxeData : ScriptableObject
     public int Price;
 
     public Sprite icon;
+    public Color Tint = Color.white;
     public Sprite EnchantmentOutline;
 
     public float GetRewardMultiplier(float upgradeBonus)

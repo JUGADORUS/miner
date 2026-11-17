@@ -31,6 +31,10 @@ public class ChunkGenerator : MonoBehaviour
     [SerializeField] private GameObject _dynamitePrefab;
     [SerializeField, Min(1)] private int _dynamiteSpawnInterval = 120;
 
+    [Header("Spiked metal (foreground)")]
+    [SerializeField] private GameObject _spikedMetalPrefab;
+    [SerializeField, Range(0f, 100f)] private float _spikedMetalChancePercent = 0.6f;
+
     [Header("Ores (foreground)")]
     [SerializeField] private OreSpawn[] _ores = System.Array.Empty<OreSpawn>();
 
@@ -348,6 +352,9 @@ public class ChunkGenerator : MonoBehaviour
 
     private GameObject GetRandomBlockPrefab()
     {
+        if (!isBackground && _spikedMetalPrefab != null && Random.Range(0f, 100f) < _spikedMetalChancePercent)
+            return _spikedMetalPrefab;
+
         if (!isBackground && _workbenchPrefab != null &&
             Random.Range(0, _workbenchSpawnInterval) == 0)
         {

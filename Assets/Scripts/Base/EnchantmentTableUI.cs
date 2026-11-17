@@ -25,6 +25,7 @@ public class EnchantmentTableUI : MonoBehaviour
         _statisticsPanel.UpdateInfo(_pickaxe);
         _rollButton.onClick.AddListener(Roll);
         GameEvents.OnMoneyChanged += RefreshPrice;
+        MinerLocalization.Changed += RefreshLanguage;
         ShowCurrent();
         RefreshPrice(_player.Money);
     }
@@ -36,6 +37,7 @@ public class EnchantmentTableUI : MonoBehaviour
         _status.rectTransform.localScale = Vector3.one;
         _rollButton.onClick.RemoveListener(Roll);
         GameEvents.OnMoneyChanged -= RefreshPrice;
+        MinerLocalization.Changed -= RefreshLanguage;
     }
 
     private void OnDestroy() => EnchantmentOutlineSprite.Release(_coloredOutline);
@@ -53,11 +55,13 @@ public class EnchantmentTableUI : MonoBehaviour
         for (int tick = 0; tick < 6; tick++)
         {
             EnchantmentKind candidate = (EnchantmentKind)(tick % PickaxeEnchantments.KindCount);
-            _status.text = $"{_pickaxe.Name}\n<color=#D9A8FF>{candidate}</color>";
+            _status.text = $"{MinerLocalization.Text(_pickaxe.Name)}\n<color=#D9A8FF>{MinerLocalization.Text(candidate.ToString())}</color>";
+            GameEvents.OnGameplayCue?.Invoke(GameplayCue.EnchantmentTick);
             yield return new WaitForSecondsRealtime(0.05f + tick * 0.025f);
         }
 
         ShowCurrent();
+        GameEvents.OnGameplayCue?.Invoke(GameplayCue.EnchantmentReveal);
         for (float elapsed = 0f; elapsed < 0.28f; elapsed += Time.unscaledDeltaTime)
         {
             float pulse = Mathf.Sin(Mathf.PI * elapsed / 0.28f);
@@ -75,7 +79,7 @@ public class EnchantmentTableUI : MonoBehaviour
         RefreshPreview();
         if (_pickaxe == null)
         {
-            _status.text = "Equip a pickaxe";
+            _status.text = MinerLocalization.Text("Equip a pickaxe");
             return;
         }
 
@@ -87,8 +91,8 @@ public class EnchantmentTableUI : MonoBehaviour
             if (level > 0) equipped.Add(FormatEnchantment(kind, level));
         }
 
-        string enchantments = equipped.Count == 0 ? "No enchantment" : string.Join("\n", equipped);
-        _status.text = $"{_pickaxe.Name}\n{enchantments}";
+        string enchantments = equipped.Count == 0 ? MinerLocalization.Text("No enchantment") : string.Join("\n", equipped);
+        _status.text = $"{MinerLocalization.Text(_pickaxe.Name)}\n{enchantments}";
     }
 
     private void RefreshPreview()
@@ -105,6 +109,7 @@ public class EnchantmentTableUI : MonoBehaviour
         EnchantmentOutlineSprite.Release(_coloredOutline);
         _coloredOutline = null;
         _preview.sprite = _pickaxe != null ? _pickaxe.icon : null;
+        _preview.color = _pickaxe != null ? _pickaxe.Tint : Color.white;
         _preview.gameObject.SetActive(_preview.sprite != null);
         if (_preview.sprite != null)
         {
@@ -133,11 +138,18 @@ public class EnchantmentTableUI : MonoBehaviour
         return image;
     }
 
+    private void RefreshLanguage()
+    {
+        if (!_revealing)
+            ShowCurrent();
+        RefreshPrice(_player.Money);
+    }
+
     private static string FormatEnchantment(EnchantmentKind kind, int level)
     {
         string rank = level == 3 ? "III" : level == 2 ? "II" : "I";
         string color = ColorUtility.ToHtmlStringRGB(PickaxeEnchantments.GetColor(kind));
-        return $"<color=#{color}>{kind} {rank}</color>";
+        return $"<color=#{color}>{MinerLocalization.Text(kind.ToString())} {rank}</color>";
     }
 
     private void RefreshPrice(int balance)
@@ -145,6 +157,7 @@ public class EnchantmentTableUI : MonoBehaviour
         bool available = _pickaxe != null;
         int cost = available ? PickaxeEnchantments.GetCost(_pickaxe) : 0;
         _rollButton.interactable = available && !_revealing && balance >= cost;
-        _price.text = _revealing ? "Rolling..." : available ? $"Roll  /  {cost} coins" : "Roll";
+        _price.text = _revealing ? MinerLocalization.Text("Rolling...")
+            : available ? MinerLocalization.Format("Roll  /  {0} coins", cost) : MinerLocalization.Text("Roll");
     }
 }

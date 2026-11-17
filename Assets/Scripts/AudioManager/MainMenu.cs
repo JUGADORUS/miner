@@ -9,8 +9,7 @@ public class MainMenu : MonoBehaviour
 
     public void LoadNextScene()
     {
-        int currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
-        SceneManager.LoadScene(currentSceneIndex + 1);
+        SceneManager.LoadScene("Mine");
     }
 
     public void OpenShop()
@@ -44,7 +43,7 @@ public class MainMenu : MonoBehaviour
 
     public void ContinueGame()
     {
-        SceneManager.LoadScene(1);
+        SceneManager.LoadScene("Mine");
     }
 
     public void Exit()

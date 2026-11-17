@@ -11,8 +11,6 @@ public class AudioManager : MonoBehaviour
     [SerializeField] private AudioSource _sfxSource;
     [SerializeField] private AudioSource _musicSource;
     [SerializeField] private AudioClip[] _pickaxeSounds;
-    [SerializeField] private AudioClip[] _hoverSounds;
-    [SerializeField] private AudioClip[] _clickSounds;
     [SerializeField] public AudioClip[] _musicClips;
 
     [SerializeField] private Slider _masterSlider;
@@ -25,11 +23,21 @@ public class AudioManager : MonoBehaviour
     private AudioClip[] _nextMusicClips; // ADDED: следующий массив музыки, который включится после конца текущего трека
     private bool _playFirstTrackFromNewPlaylist; // ADDED: нужно ли после переключения включить именно первый трек нового массива
 
+    private static AudioSource _menuSource;
+    private AudioClip _hoverSound;
+    private AudioClip _confirmSound;
+    private AudioClip _adjustSound;
+    private float _lastHover = float.NegativeInfinity;
+    private AudioClip[] _gameplayClips;
+    private float[] _nextCueTime;
+    private AudioSource _gameplaySource;
+
     private void OnEnable()
     {
         GameEvents.OnButtonHovered += HandleHover;
         GameEvents.OnButtonClicked += HandleClick;
         GameEvents.OnHitBlock += HandleHit;
+        GameEvents.OnGameplayCue += PlayGameplayCue;
     }
 
     private void OnDisable()
@@ -37,16 +45,60 @@ public class AudioManager : MonoBehaviour
         GameEvents.OnButtonHovered -= HandleHover;
         GameEvents.OnButtonClicked -= HandleClick;
         GameEvents.OnHitBlock -= HandleHit;
+        GameEvents.OnGameplayCue -= PlayGameplayCue;
     }
 
     private void HandleHover(GameObject button)
     {
-        _sfxSource.PlayOneShot(_hoverSounds[0]);
+        if (Time.unscaledTime - _lastHover < 0.065f) return;
+        _lastHover = Time.unscaledTime;
+        PlayMenuSound(_hoverSound);
     }
 
     private void HandleClick(GameObject button)
     {
-        _sfxSource.PlayOneShot(_clickSounds[0]);
+        PlayMenuSound(button.TryGetComponent<Slider>(out _) ? _adjustSound : _confirmSound);
+    }
+
+    private void PlayMenuSound(AudioClip cue)
+    {
+        if (cue == null) return;
+        if (_menuSource == null)
+        {
+            var player = new GameObject("Menu Audio", typeof(AudioSource));
+            DontDestroyOnLoad(player);
+            _menuSource = player.GetComponent<AudioSource>();
+            _menuSource.playOnAwake = false;
+        }
+
+        _menuSource.outputAudioMixerGroup = _sfxSource.outputAudioMixerGroup;
+        _menuSource.PlayOneShot(cue);
+    }
+
+    private void PlayGameplayCue(GameplayCue cue)
+    {
+        int index = (int)cue;
+        float now = Time.unscaledTime;
+        if (now < _nextCueTime[index] || _gameplayClips[index] == null) return;
+
+        _nextCueTime[index] = now + (cue switch
+        {
+            GameplayCue.Coin => 0.08f,
+            GameplayCue.Wear => 0.09f,
+            GameplayCue.Blast => 0.075f,
+            GameplayCue.Luck => 0.25f,
+            _ => 0.045f
+        });
+
+        if (_gameplaySource == null)
+        {
+            var player = new GameObject("Gameplay Audio", typeof(AudioSource));
+            player.transform.SetParent(transform, false);
+            _gameplaySource = player.GetComponent<AudioSource>();
+            _gameplaySource.playOnAwake = false;
+            _gameplaySource.outputAudioMixerGroup = _sfxSource.outputAudioMixerGroup;
+        }
+        _gameplaySource.PlayOneShot(_gameplayClips[index]);
     }
 
     private void HandleHit(Block block, int arg2)
@@ -57,6 +109,15 @@ public class AudioManager : MonoBehaviour
 
     void Awake()
     {
+        _hoverSound = Resources.Load<AudioClip>("MenuAudio/Hover");
+        _confirmSound = Resources.Load<AudioClip>("MenuAudio/Confirm");
+        _adjustSound = Resources.Load<AudioClip>("MenuAudio/Adjust");
+
+        var cueNames = Enum.GetNames(typeof(GameplayCue));
+        _gameplayClips = new AudioClip[cueNames.Length];
+        _nextCueTime = new float[cueNames.Length];
+        foreach (GameplayCue cue in Enum.GetValues(typeof(GameplayCue)))
+            _gameplayClips[(int)cue] = Resources.Load<AudioClip>($"GameplayAudio/{cue}");
         float mVal = PlayerPrefs.GetFloat("MasterVol", 0.75f);
         float musVal = PlayerPrefs.GetFloat("MusicVol", 0.75f);
         float sfxVal = PlayerPrefs.GetFloat("SfxVol", 0.75f);

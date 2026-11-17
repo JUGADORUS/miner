@@ -27,7 +27,7 @@ public class Pickaxe : MonoBehaviour
 
     private void Awake()
     {
-        int equippedId = PlayerPrefs.GetInt("EquippedPickaxe", 0);
+        int equippedId = ShopUI.GetEquippedId();
         data = _pickaxeDatabase.GetById(equippedId);
 
         if (data == null)
@@ -49,6 +49,7 @@ public class Pickaxe : MonoBehaviour
         RangeOfDigging = data.RangeOfDigging;
         RewardMultiplyer = data.GetRewardMultiplier(multiplierBonus);
         Icon.sprite = data.icon;
+        if (data.ID == PremiumPickaxe.PickaxeId) Icon.color = data.Tint;
 
         Debug.Log($"Damage: {Damage}");
 

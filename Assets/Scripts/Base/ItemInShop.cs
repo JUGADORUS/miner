@@ -10,4 +10,9 @@ public class ItemInShop : MonoBehaviour
     [SerializeField] public Image ButtonImage;
     [SerializeField] public Button Button;
     [SerializeField] public TextMeshProUGUI Action;
+    private void Start()
+    {
+        LandscapeUi.FitNewItem(Button);
+        ButtonNotifier.InstallIn(transform);
+    }
 }

@@ -1,5 +1,21 @@
 using UnityEngine;
 
+internal enum GameplayCue
+{
+    Wear,
+    Coin,
+    Blast,
+    Fuse,
+    Lightning,
+    Luck,
+    Break,
+    Dash,
+    Critical,
+    Repair,
+    EnchantmentTick,
+    EnchantmentReveal
+}
+
 public static class GameEvents
 {
     public static System.Action<Block, int> OnHitBlock; // (block, durability)
@@ -25,4 +41,8 @@ public static class GameEvents
     public static System.Action<GameObject> OnButtonClicked;
 
     public static System.Action<int> OnSessionEnded;
+
+    public static System.Action OnSessionRevived;
+
+    internal static System.Action<GameplayCue> OnGameplayCue;
 }

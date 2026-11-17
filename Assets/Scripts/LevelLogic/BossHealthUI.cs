@@ -12,11 +12,29 @@ public class BossHealthUI : MonoBehaviour
 
     private RectTransform _panel;
     private RectTransform _fill;
+    private TextMeshProUGUI _title;
     private TextMeshProUGUI _healthLabel;
     private int _displayedHealth = -1;
     private int _displayedMaximum;
     private Block _displayedBoss;
     private float _hitElapsed = HitDuration;
+
+    private void OnEnable()
+    {
+        MinerLocalization.Changed += RefreshLanguage;
+        RefreshLanguage();
+    }
+
+    private void OnDisable() => MinerLocalization.Changed -= RefreshLanguage;
+
+    private void RefreshLanguage()
+    {
+        if (_title == null)
+            return;
+
+        _title.text = MinerLocalization.Text("BOSS");
+        _healthLabel.SetText(MinerLocalization.Format("{0} / {1} HP", _displayedHealth, _displayedMaximum));
+    }
 
     private void LateUpdate()
     {
@@ -50,7 +68,7 @@ public class BossHealthUI : MonoBehaviour
         _displayedHealth = health;
         _displayedMaximum = maximum;
         _fill.anchorMax = new Vector2(Mathf.Clamp01((float)health / maximum), 1f);
-        _healthLabel.SetText($"{health} / {maximum} HP");
+        _healthLabel.SetText(MinerLocalization.Format("{0} / {1} HP", health, maximum));
     }
 
     private void UpdateHitFeedback()
@@ -72,10 +90,13 @@ public class BossHealthUI : MonoBehaviour
         _panel.anchoredPosition = new Vector2(0f, 12f);
         _panel.sizeDelta = new Vector2(360f, 60f);
 
-        var title = AddLabel("Boss Label", TextAlignmentOptions.MidlineLeft);
-        title.text = "BOSS";
-        title.color = new Color32(255, 174, 147, 255);
-        SetRect(title.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f),
+        _title = AddLabel("Boss Label", TextAlignmentOptions.MidlineLeft);
+        _title.text = MinerLocalization.Text("BOSS");
+        _title.enableAutoSizing = true;
+        _title.fontSizeMin = 10f;
+        _title.fontSizeMax = 20f;
+        _title.color = new Color32(255, 174, 147, 255);
+        SetRect(_title.rectTransform, new Vector2(0f, 1f), new Vector2(0f, 1f),
             new Vector2(14f, -34f), new Vector2(90f, -6f));
 
         _healthLabel = AddLabel("Boss HP", TextAlignmentOptions.MidlineRight);

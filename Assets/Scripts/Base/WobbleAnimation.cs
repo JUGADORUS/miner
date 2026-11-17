@@ -12,6 +12,12 @@ public class UIAnimation : MonoBehaviour
         startPosition = transform.localPosition;
     }
 
+    internal void SetOrigin(Vector3 position)
+    {
+        startPosition = position;
+        transform.localPosition = position;
+    }
+
     private void Update()
     {
         float newY = startPosition.y + Mathf.Sin(Time.time * speed) * amplitude;
